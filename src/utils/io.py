@@ -56,7 +56,8 @@ def save_to_txt(data: Any, file_path: str) -> None:
         with open(file_path, 'w', encoding='utf-8') as file:
             if isinstance(data, list):
                 for item in data:
-                    file.write(' '.join(item) + '\n')
+                    print(item)
+                    file.writelines(" ".join(map(str, item)))
             elif isinstance(data, str):
                 file.write(data)
 
