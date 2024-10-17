@@ -57,7 +57,7 @@ def save_to_txt(data: Any, file_path: str) -> None:
             if isinstance(data, list):
                 for item in data:
                     print(item)
-                    file.writelines(" ".join(map(str, item)))
+                    file.write(" ".join(map(str, item)) + "\n")
             elif isinstance(data, str):
                 file.write(data)
 
