@@ -36,4 +36,10 @@ def read_train(train_file, corpus_df):
 
     return train_list
 
+def search_by_id(data, search_id):
+    for item in data:
+        if item.get('id') == search_id:
+            return item
+    return None
+
 
