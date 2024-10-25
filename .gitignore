@@ -6,3 +6,4 @@ outputs
 *.txt
 *.pkl
 dummy.py
+wandb
