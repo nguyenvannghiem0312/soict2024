@@ -1,5 +1,5 @@
 {
-    "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "model": "intfloat/multilingual-e5-large",
     "guide_model": "",
     "loss": "MultipleNegativesRankingLoss",
     "train_path": "data/Train/train.json",
