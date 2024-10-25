@@ -43,3 +43,24 @@ def search_by_id(data, search_id):
     return None
 
 
+def process_data(train):
+    output = []
+    for item in train:
+        query_text = item['text']
+        
+        for relevant_context in item['relevant']:
+            entry = {
+                "anchor": query_text,
+                "positive": relevant_context['text']
+            }
+            
+            if 'not_relevant' in item:
+                for irrelevant_context in item['not_relevant']:
+                    negative_entry = entry.copy()
+                    negative_entry["negative"] = irrelevant_context['text']
+                    output.append(negative_entry)
+            else:
+                output.append(entry)
+    
+    return output
+
