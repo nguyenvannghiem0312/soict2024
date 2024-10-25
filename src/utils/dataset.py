@@ -64,3 +64,28 @@ def process_data(train):
     
     return output
 
+def process_dev(corpus, query):
+    queries = {}
+    corpus_dict = {}
+    relevant_docs = {}
+
+    for q in query:
+        qid = str(q['id'])
+        queries[qid] = q['text']
+        
+        # Xử lý relevant docs cho từng query
+        relevant_set = set()
+        for relevant in q['relevant']:
+            relevant_set.add(str(relevant['id']))
+        
+        relevant_docs[qid] = relevant_set
+
+    for c in corpus:
+        cid = str(c['id'])
+        corpus_dict[cid] = c['text']
+
+    return {
+        "queries": queries,
+        "corpus": corpus_dict,
+        "relevant_docs": relevant_docs
+    }
