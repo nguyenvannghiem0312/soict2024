@@ -10,14 +10,14 @@ from multiprocessing import Pool
 with open('configs/infer_sbert.json', 'r') as f:
     config = json.load(f)
 
-# with open('configs/sbert.json', 'r') as f:
-#     sbert_config = json.load(f)
+with open('configs/sbert.json', 'r') as f:
+    sbert_config = json.load(f)
 
 
 corpus_path = config['corpus_path']
 query_path = config['query_path']
-# train_path = sbert_config['train_path']
-train_path = 'data/Legal Document Retrieval/public_test.json'
+train_path = sbert_config['train_path']
+# train_path = 'data/Legal Document Retrieval/public_test.json'
 
 def read_json(file_path):
     with open(file_path, 'r', encoding="utf-8") as f:
@@ -80,6 +80,26 @@ def public_test_eval_parallel():
     with open('data/similar_corpus_ids.txt', 'w') as output_file:
         output_file.write("\n".join(results))
 
+def negative_generation(bm25_model_path):
+    train_data = read_json(train_path)
+    corpus = read_json(corpus_path)
+    with open(bm25_model_path, 'rb') as f:
+        bm25 = pickle.load(f)
+    negative_data = []
+    for item in tqdm(train_data):
+        relevant_list = [rele['id'] for rele in item['relevant']]
+        query = item["text"]
+        tokenized_query = ViTokenizer.tokenize(query).split()
+        scores = bm25.get_scores(tokenized_query)
+        top_10_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:10]
+        top_10_ids = [corpus[i]['id'] for i in top_10_indices]
+        negative_list = [doc_id for doc_id in top_10_ids if doc_id not in relevant_list]
+        negative_data.append({
+            "id": item["id"],
+            "negative": negative_list[0]
+        })
+    with open('data/negative_data.json', 'w') as f:
+        json.dump(negative_data, f)
 
 if __name__ == '__main__':
     # tokenize_corpus_and_save(corpus_path)
