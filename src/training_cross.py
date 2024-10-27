@@ -37,8 +37,7 @@ def load_custom_data(config):
         data = json.load(f)
         for item in data:
             query = item['text']
-            for relevant in item['relevant']:
-                dev_samples.append(InputExample(texts=[query, relevant['text']], label=1))
+            dev_samples.append({'query': query, 'positive': [r['text'] for r in item['relevant']], 'negative': ['Tôi không biết']})
 
     return train_samples, dev_samples
 
@@ -54,9 +53,7 @@ def train(config):
     train_dataloader = DataLoader(train_samples, shuffle=True, batch_size=train_batch_size)
     
     if dev_samples:
-        accuracy_evaluator = CESoftmaxAccuracyEvaluator.from_input_examples(dev_samples, name="custom-dev")
-        f1_evaluator = CERerankingEvaluator(dev_samples, name="custom-dev")
-        evaluator = SequentialEvaluator([accuracy_evaluator, f1_evaluator])
+        evaluator = CERerankingEvaluator(dev_samples, name="custom-dev")
     else:
         evaluator = None
 

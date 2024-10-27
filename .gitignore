@@ -7,3 +7,5 @@ outputs
 *.pkl
 dummy.py
 wandb
+src/data
+!src/configs/*
