@@ -16,13 +16,13 @@ def tokenize_corpus_and_save(corpus_path):
 def get_top_k_relevant_corpus(query, corpus, bm25, k=10):
     tokenized_query = ViTokenizer.tokenize(query).split()
     doc_scores = bm25.get_scores(tokenized_query)
-    normalized_scores = [score / max(doc_scores) for score in doc_scores] if doc_scores else []
-    sorted_indices = sorted(range(len(normalized_scores)), key=lambda i: normalized_scores[i], reverse=True)[:k]
+    max_scores = max(doc_scores)
+    sorted_indices = sorted(range(len(doc_scores)), key=lambda i: doc_scores[i], reverse=True)[:k]
     result = {
         'id': query,
         'text': query,
         'relevant': [corpus[i]['id'] for i in sorted_indices],
-        'score': [normalized_scores[i] for i in sorted_indices]
+        'score': [doc_scores[i] / max_scores for i in sorted_indices]
     }
     return result
 
@@ -62,8 +62,8 @@ def main():
         tokenized_corpus = read_json(config['tokenizer_corpus_path'])
     except FileNotFoundError:
         tokenized_corpus, token_frequency = tokenize_corpus_and_save(config['corpus_path'])
-        save_to_json(data=tokenized_corpus, file_path='data/Legal Document Retrieval/tokenized_corpus.json')
-        save_to_json(data=token_frequency, file_path='data/Legal Document Retrieval/token_frequency.json')
+        save_to_json(data=tokenized_corpus, file_path=config['tokenizer_corpus_path'])
+        save_to_json(data=token_frequency, file_path=config['token_frequency_path'])
 
     if config["is_test"] == True:
         results = public_test_eval(test_path=config['query_path'], tokenized_corpus=tokenized_corpus, corpus=corpus, top_k=config["top_k"])
