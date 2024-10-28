@@ -1,0 +1,12 @@
+{
+    "corpus_path": "data/Legal Document Retrieval/corpus.json",
+    "tokenizer_corpus_path": "data/Legal Document Retrieval/tokenizer_corpus.json",
+    "token_frequency_path": "data/Legal Document Retrieval/token_frequency.json",
+    "train_path": "data/Train/train.json",
+    "query_path": "data/Legal Document Retrieval/public_test.json",
+    "result_path": "src/outputs/bm25_result.json",
+    "generative_data_path": "data/Train/gen_negatives.json",
+    "top_k": 10,
+    "is_test": true,
+    "is_generate": false
+}
