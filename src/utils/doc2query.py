@@ -3,20 +3,33 @@ import sys
 import json
 import torch
 import logging
+from utils.io import read_json
+import argparse
 from datetime import datetime
 from torch.utils.data import Dataset, IterableDataset
 from transformers import Seq2SeqTrainer, AutoModelForSeq2SeqLM, AutoTokenizer, Seq2SeqTrainingArguments
 
-with open('configs/infer_sbert.json', 'r') as f:
-    config = json.load(f)
+def load_config(config_path="configs/sbert.json"):
+    """Load the configuration from a JSON file."""
+    config = read_json(config_path)
+    return config
 
-with open('configs/sbert.json', 'r') as f:
-    sbert_config = json.load(f)
+# with open('configs/infer_sbert.json', 'r') as f:
+#     config = json.load(f)
 
+# with open('configs/sbert.json', 'r') as f:
+#     sbert_config = json.load(f)
 
-corpus_path = config['corpus_path']
-query_path = config['query_path']
-train_path = sbert_config['train_path']
+parser = argparse.ArgumentParser()
+parser.add_argument("--lang", default="vi", required=True)
+parser.add_argument("--model_name", default="doc2query/msmarco-vietnamese-mt5-base-v1", help="Name of the used model")
+parser.add_argument("--epochs", default=4, type=int, help="Number of training epochs")
+parser.add_argument("--batch_size", default=32, type=int, help="Batch size")
+parser.add_argument("--max_source_length", default=1024, type=int, help="Maximum length of the source input")
+parser.add_argument("--max_target_length", default=82, type=int, help="Maximum length of the target output")
+parser.add_argument("--eval_size", default=1000, type=int, help="Size of the evaluation dataset")
+
+args = parser.parse_args()
 
 # Set up logging
 logging.basicConfig(
@@ -25,20 +38,10 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 
-# Define arguments directly
-args = {
-    "lang": "en",  # Set your language here
-    "model_name": "google/mt5-base",
-    "epochs": 4,
-    "batch_size": 32,
-    "max_source_length": 320,
-    "max_target_length": 64,
-    "eval_size": 1000,
-}
-
 def main():
+    config = load_config(config_path="configs/sbert.json")
     ############ Load dataset
-    with open(train_path, 'r', encoding="utf-8") as f:
+    with open(config["train_path"], 'r', encoding="utf-8") as f:
         train_data = json.load(f)
 
     train_pairs = []
@@ -85,16 +88,6 @@ def main():
         save_total_limit=1,
         num_train_epochs=args["epochs"],
     )
-
-    ############ Arguments
-
-    ############ Load datasets
-
-    print("Input:", train_pairs[0][1])
-    print("Target:", train_pairs[0][0])
-
-    print("Input:", eval_pairs[0][1])
-    print("Target:", eval_pairs[0][0])
 
     def data_collator(examples):
         targets = [row[0] for row in examples]
