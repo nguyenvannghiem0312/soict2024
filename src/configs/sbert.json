@@ -2,7 +2,7 @@
     "model": "intfloat/multilingual-e5-large",
     "guide_model": "",
     "loss": "MultipleNegativesRankingLoss",
-    "train_path": "data/Legal Document Retrieval/train.json",
+    "train_path": "data/Train/train.json",
     "corpus_dev_path": "data/Dev/corpus_dev.json",
     "query_dev_path": "data/Dev/query_dev.json",
     "output_dir": "outputs/test",
