@@ -23,11 +23,19 @@ MBART_LANG_ID = ['ar_AR', 'cs_CZ', 'de_DE', 'en_XX', 'es_XX', 'et_EE', 'fi_FI', 
 
 
 def show_parameter(target_model, log: bool = False, double_embedding: bool = True):
-    param_size_embedding = prod(target_model.get_input_embeddings().weight.shape)
+    try:
+        param_size_embedding = prod(target_model.get_input_embeddings().weight.shape)
+    except Exception as e:  ### only for Jina
+        param_size_embedding = prod(target_model.roberta.embeddings.word_embeddings.weight.shape)
+        
     if double_embedding:
         param_size_embedding = param_size_embedding * 2
     param_size_full = sum(p.numel() for p in target_model.parameters())
-    vocab_size = len(target_model.get_input_embeddings().weight)
+
+    try:
+        vocab_size = len(target_model.get_input_embeddings().weight)
+    except Exception as e:  ### only for Jina
+        vocab_size = len(target_model.roberta.embeddings.word_embeddings.weight)
 
     func = logging.info if log else print
     func(f"PARAMETER SUMMARY")
@@ -199,8 +207,15 @@ class VocabTrimmer:
         logging.info("updating model")
 
         # set input embedding
-        input_embedding = self.model.get_input_embeddings()
-        self.model.set_input_embeddings(torch.nn.Embedding.from_pretrained(input_embedding.weight[new_vocab_id]))
+        try:
+            input_embedding = self.model.get_input_embeddings()
+        except Exception as e:  ### only for Jina
+            input_embedding = self.model.roberta.embeddings.word_embeddings
+
+        try:
+            self.model.set_input_embeddings(torch.nn.Embedding.from_pretrained(input_embedding.weight[new_vocab_id]))
+        except Exception as e:  ### only for Jina
+            self.model.roberta.embeddings.word_embeddings = torch.nn.Embedding.from_pretrained(input_embedding.weight[new_vocab_id])
 
         # set output embedding
         output_embedding = self.model.get_output_embeddings()
@@ -219,7 +234,17 @@ class VocabTrimmer:
 
         # resize model vocab
         self.model.config.vocab_size = len(new_vocab_id)
-        self.model.resize_token_embeddings(self.model.config.vocab_size)
+        try:
+            self.model.resize_token_embeddings(self.model.config.vocab_size)
+        except:
+            old_embeddings = self.model.roberta.embeddings.word_embeddings
+            new_embedding_size = len(new_vocab_id)
+            new_embeddings = torch.nn.Embedding(new_embedding_size, old_embeddings.embedding_dim)
+
+            new_embeddings.weight.data[:old_embeddings.num_embeddings] = old_embeddings.weight.data
+
+            # Gán embedding layer mới cho mô hình
+            self.model.roberta.embeddings.word_embeddings = new_embeddings
 
         # save to tem directory and load it
         self.model.save_pretrained(path_to_save)
