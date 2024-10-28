@@ -10,7 +10,7 @@ import torch
 from tokenizers import models
 from huggingface_hub import Repository
 from transformers import MT5ForConditionalGeneration, MBartForConditionalGeneration, AutoConfig, pipeline, \
-    AutoTokenizer, AutoModelForMaskedLM, AutoModelForTokenClassification, AutoModelForSequenceClassification
+    AutoTokenizer, AutoModelForMaskedLM, AutoModelForTokenClassification, AutoModelForSequenceClassification, XLMRobertaModel
 from .util import safe_rmtree, pretty
 from .vocab_miner import vocab_miner
 
@@ -118,6 +118,8 @@ class VocabTrimmer:
                 self.__model_class = AutoModelForSequenceClassification
             elif self.config.architectures[0].endswith("MaskedLM"):
                 self.__model_class = AutoModelForMaskedLM
+            elif self.config.architectures[0].endswith("XLMRobertaModel"):
+                self.__model_class = XLMRobertaModel
             else:
                 raise ValueError(f"model type {self.config.architectures} is not supported.")
 
