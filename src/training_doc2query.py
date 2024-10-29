@@ -1,27 +1,8 @@
-import argparse
 import logging
 from transformers import Seq2SeqTrainer, AutoModelForSeq2SeqLM, AutoTokenizer, Seq2SeqTrainingArguments
 import sys
-from datetime import datetime
 import torch
-import os
-import json
-import tqdm
 from utils.io import read_json
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--lang", default="vi")
-parser.add_argument("--model_name", default="doc2query/msmarco-vietnamese-mt5-base-v1")
-parser.add_argument("--epochs", default=4, type=int)
-parser.add_argument("--batch_size", default=32, type=int)
-parser.add_argument("--max_source_length", default=1024, type=int)
-parser.add_argument("--max_target_length", default=82, type=int)
-parser.add_argument("--eval_size", default=1000, type=int)
-args = parser.parse_args()
-
-def load_config(config_path="configs/sbert.json"):
-    config = read_json(config_path)
-    return config
 
 def setup_logging():
     logging.basicConfig(
@@ -30,10 +11,8 @@ def setup_logging():
         handlers=[logging.StreamHandler(sys.stdout)],
     )
 
-def load_data():
-    config = load_config(config_path="configs/sbert.json")
-    with open(config["train_path"], 'r', encoding="utf-8") as f:
-        train_data = json.load(f)
+def load_data(config):
+    train_data = read_json(path=config['train_path'])
 
     train_pairs = []
     eval_pairs = []
@@ -42,7 +21,7 @@ def load_data():
         for rel in item['relevant']:
             text = rel['text']
             pair = (item['text'], text)
-            if len(eval_pairs) < args.eval_size:
+            if len(eval_pairs) < config["eval_size"]:
                 eval_pairs.append(pair)
             else:
                 train_pairs.append(pair)
@@ -54,19 +33,21 @@ def setup_model_and_tokenizer(model_name):
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     return model, tokenizer
 
-def setup_training_args(output_dir, batch_size, epochs):
+def setup_training_args(config):
     return Seq2SeqTrainingArguments(
-        output_dir=output_dir,
-        bf16=True,
-        per_device_train_batch_size=batch_size,
-        evaluation_strategy="steps",
-        save_steps=1000,
-        logging_steps=100,
-        eval_steps=1000,
-        warmup_steps=1000,
-        save_total_limit=1,
-        num_train_epochs=epochs,
-        report_to=None,
+        output_dir=config["output_dir"],
+        bf16=config["bf16"],
+        per_device_train_batch_size=config["batch_size"],
+        evaluation_strategy=config["eval_strategy"],
+        eval_steps=config["eval_steps"],
+        save_strategy=config["save_strategy"],
+        save_steps=config["save_steps"],
+        logging_steps=config["logging_steps"],
+        warmup_ratio=config["warmup_ratio"],
+        save_total_limit=config["save_total_limit"],
+        num_train_epochs=config["num_train_epochs"],
+        learning_rate=config["learning_rate"],
+        run_name=config["run_name"]
     )
 
 def data_collator(examples, tokenizer, max_source_length, max_target_length, fp16):
@@ -88,13 +69,11 @@ def data_collator(examples, tokenizer, max_source_length, max_target_length, fp1
 
 def main():
     setup_logging()
-    train_pairs, eval_pairs = load_data()
-    model, tokenizer = setup_model_and_tokenizer(args.model_name)
+    config = read_json(path="configs/doc2query_config.json")
+    train_pairs, eval_pairs = load_data(config)
+    model, tokenizer = setup_model_and_tokenizer(config["model_name"])
 
-    output_dir = 'output/' + args.lang + '-' + args.model_name.replace("/", "-") + '-' + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    os.makedirs(output_dir, exist_ok=True)
-
-    training_args = setup_training_args(output_dir, args.batch_size, args.epochs)
+    training_args = setup_training_args(config)
 
     trainer = Seq2SeqTrainer(
         model=model,
@@ -102,7 +81,7 @@ def main():
         train_dataset=train_pairs,
         eval_dataset=eval_pairs,
         tokenizer=tokenizer,
-        data_collator=lambda examples: data_collator(examples, tokenizer, args.max_source_length, args.max_target_length, training_args.fp16)
+        data_collator=lambda examples: data_collator(examples, tokenizer, config["max_source_length"], config["max_target_length"], training_args.fp16)
     )
 
     trainer.train()
