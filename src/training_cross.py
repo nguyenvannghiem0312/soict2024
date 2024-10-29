@@ -85,6 +85,8 @@ def train(config):
         evaluation_steps=config['eval_steps'] if evaluator else None,
         warmup_steps=warmup_steps,
         output_path=model_save_path,
+        evaluation_steps=config['eval_steps'],
+        save_best_model=config['load_best_model_at_end'],
     )
 
 if __name__ == "__main__":
