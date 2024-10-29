@@ -50,7 +50,7 @@ def negative_generation(train_path, tokenized_corpus, corpus):
         top_k_result = get_top_k_relevant_corpus(query, corpus, bm25, k=10)
         negative_list = [doc_id for doc_id in top_k_result['relevant'] if doc_id not in relevant_list]
         
-        item['not_relevant'] = [{'id': cid, 'text': search_by_id(data=corpus, search_id=cid)} for cid in negative_list]
+        item['not_relevant'] = [{'id': cid, 'text': search_by_id(data=corpus, search_id=cid)['text']} for cid in negative_list]
 
 
     return train_data
