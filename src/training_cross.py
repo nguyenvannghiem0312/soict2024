@@ -35,7 +35,7 @@ def load_custom_data(config):
 def load_eval(config):
     corpus_dev = read_json(config["corpus_dev_path"])
     query_dev = read_json(config["query_dev_path"])
-    cross_dev = read_json(config["query_dev_path"])
+    cross_dev = read_json(config["cross_dev_path"])
 
     dev_samples = []
 
