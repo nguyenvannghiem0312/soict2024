@@ -1,11 +1,11 @@
 {
     "corpus_path": "data/Legal Document Retrieval/corpus.json",
     "query_path": "data/Legal Document Retrieval/public_test.json",
-    "corpus_embedding_path": "outputs/corpus_embeddings_e5_large.pkl",
+    "corpus_embedding_path": "outputs/corpus_embeddings_e5.pkl",
     "output_predict_txt": "outputs/predict.txt",
     "output_predict_json": "outputs/predict.json",
     "output_detailed_predict_json": "outputs/detailed_predict.json",
-    "model_name": "intfloat/multilingual-e5-large",
+    "model_name": "Turbo-AI/multilingual-e5-base__trim_vocab",
     "top_k": 10,
     "is_tokenizer": false
 }

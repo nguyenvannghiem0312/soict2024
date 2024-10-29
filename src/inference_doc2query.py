@@ -1,31 +1,56 @@
-import argparse
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 import torch
-
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model_dir", required=True, help="Directory of the trained model")
-    parser.add_argument("--input_text", required=True, help="Input text for inference")
-    parser.add_argument("--max_length", default=64, type=int, help="Maximum length of the generated output")
-    return parser.parse_args()
+import uuid
+from utils.io import read_json, save_to_json
 
 def load_model_and_tokenizer(model_dir):
     model = AutoModelForSeq2SeqLM.from_pretrained(model_dir)
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     return model, tokenizer
 
-def generate_output(model, tokenizer, input_text, max_length):
-    inputs = tokenizer(input_text, return_tensors="pt", truncation=True, padding=True)
+def generate_output(model, tokenizer, contexts, config, device):
+    inputs = tokenizer(contexts, return_tensors="pt", truncation=True, padding=True).to(device)
     with torch.no_grad():
-        outputs = model.generate(inputs["input_ids"], max_length=max_length)
-    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+        sampling_outputs = model.generate(
+            inputs["input_ids"],
+            max_length=config["max_length"],
+            do_sample=True,
+            top_p=config["top_p"],
+            top_k=config["top_k"],
+            num_return_sequences=config["num_return_sequences"]
+        )
+    batch_size = len(contexts)
+    return [[tokenizer.decode(output, skip_special_tokens=True) for output in sampling_outputs[i::batch_size]]
+            for i in range(batch_size)]
 
 def main():
-    args = parse_arguments()
-    model, tokenizer = load_model_and_tokenizer(args.model_dir)
-    output_text = generate_output(model, tokenizer, args.input_text, args.max_length)
-    print("Generated Output:", output_text)
+    config = read_json('configs/infer_doc2query.json')
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model, tokenizer = load_model_and_tokenizer(config['model_name'])
+    model.to(device)
+
+    corpus = read_json(config['input_file'])
+    batch_size = config["batch_size"]
+    output_data = []
+    for i in range(0, len(corpus), batch_size):
+        batch = corpus[i:i + batch_size]
+        contexts = [item['text'] for item in batch]
+        queries_batch = generate_output(model, tokenizer, contexts, config, device)
+
+        for item, queries in zip(batch, queries_batch):
+            cid = item['id']
+            context = item['text']
+            for query in queries:
+                output = {
+                    'id': str(uuid.uuid4()),
+                    'text': query,
+                    'relevant': [{'id': cid, 'text': context}]
+                }
+                output_data.append(output)
+
+    save_to_json(data=output_data, file_path=config["output_file"])
 
 if __name__ == "__main__":
     main()
-    # usage python inference.py --model_dir path/to/model --input_text "Your input text here"

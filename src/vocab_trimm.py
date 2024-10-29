@@ -1,8 +1,8 @@
 import vocabtrimmer
 
-trimmer = vocabtrimmer.VocabTrimmer("intfloat/multilingual-e5-large", double_embedding=False)
+trimmer = vocabtrimmer.VocabTrimmer("jinaai/jina-reranker-v2-base-multilingual", double_embedding=False)
 trimmer.trim_vocab(
-        path_to_save="multilingual-e5-large",
+        path_to_save="jina-reranker-v2-base-multilingual",
         language="vi",
         dataset='Turbo-AI/data-corpus',
         dataset_column='text',
@@ -19,14 +19,14 @@ from transformers import AutoModel, AutoTokenizer
 import torch
 
 # Load the model and tokenizer
-model = AutoModel.from_pretrained('multilingual-e5-large')
-tokenizer = AutoTokenizer.from_pretrained('multilingual-e5-large')
+model = AutoModel.from_pretrained('jina-reranker-v2-base-multilingual')
+tokenizer = AutoTokenizer.from_pretrained('jina-reranker-v2-base-multilingual')
 
 # Convert the model to bf16
 model = model.to(torch.bfloat16)
 
 # Define your model repository name (it should be unique)
-repo_name = "Turbo-AI/multilingual-e5-large__trim_vocab"
+repo_name = "Turbo-AI/jina-reranker-v2-base-multilingual__trim_vocab"
 
 # Push the model and tokenizer to the Hugging Face Hub
 model.push_to_hub(repo_name)

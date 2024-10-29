@@ -1,0 +1,10 @@
+{
+    "model_name": "doc2query/msmarco-vietnamese-mt5-base-v1",
+    "input_file": "data/Legal Document Retrieval/corpus.json",
+    "output_file": "data/Train/train_generate.json",
+    "max_length": 1024,
+    "top_p": 0.9,
+    "top_k": 50,
+    "num_return_sequences": 3,
+    "batch_size": 4
+}
