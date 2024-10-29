@@ -1,17 +1,14 @@
-import csv
-import gzip
 import logging
 import math
-import os
-import json
 from datetime import datetime
 from torch.utils.data import DataLoader
-from sentence_transformers import LoggingHandler, util
+from sentence_transformers import LoggingHandler
 from sentence_transformers.cross_encoder import CrossEncoder
-from sentence_transformers.cross_encoder.evaluation import CERerankingEvaluator, CESoftmaxAccuracyEvaluator
+from sentence_transformers.cross_encoder.evaluation import CERerankingEvaluator
 from sentence_transformers.evaluation import SequentialEvaluator
 from sentence_transformers.readers import InputExample
 from utils.io import read_json
+from utils.dataset import search_by_id
 
 logging.basicConfig(
     format="%(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO, handlers=[LoggingHandler()]
@@ -24,23 +21,42 @@ logger.info("Loading custom training data")
 def load_custom_data(config):
     filepath = config['train_path']
     train_samples = []
-    dev_samples = [] 
 
-    with open(filepath, 'r', encoding="utf8") as f:
-        data = json.load(f)
-        for item in data:
-            query = item['text']
-            for relevant in item['relevant']:
-                train_samples.append(InputExample(texts=[query, relevant['text']], label=1))
+    data = read_json(filepath)
+    for item in data:
+        query = item['text']
+        for relevant in item['relevant']:
+            train_samples.append(InputExample(texts=[query, relevant['text']], label=1))
+        for relevant in item['not_relevant']:
+            train_samples.append(InputExample(texts=[query, relevant['text']], label=0))
 
-    with open(config['query_dev_path'], 'r', encoding="utf8") as f:
-        data = json.load(f)
-        for item in data:
-            query = item['text']
-            for relevant in item['relevant']:
-                dev_samples.append(InputExample(texts=[query, relevant['text']], label=1))
+    return train_samples
 
-    return train_samples, dev_samples
+def load_eval(config):
+    corpus_dev = read_json(config["corpus_dev_path"])
+    query_dev = read_json(config["query_dev_path"])
+    cross_dev = read_json(config["query_dev_path"])
+
+    dev_samples = []
+
+    for item in cross_dev:
+        query = search_by_id(data=query_dev, search_id=item['id'])['text']
+        relevants = search_by_id(data=query_dev, search_id=item['id'])['relevant']
+
+        positive = [rel['text'] for rel in relevants]
+        negative = []
+        for id in item['relevant']:
+            context = search_by_id(data=corpus_dev, search_id=id)['text']
+            if context not in positive:
+                negative.append(context)
+
+        dev_samples.append({
+            'query': query,
+            'positive': positive,
+            'negative': negative
+        })
+    
+    return dev_samples
 
 
 def train(config):
@@ -54,9 +70,7 @@ def train(config):
     train_dataloader = DataLoader(train_samples, shuffle=True, batch_size=train_batch_size)
     
     if dev_samples:
-        accuracy_evaluator = CESoftmaxAccuracyEvaluator.from_input_examples(dev_samples, name="custom-dev")
-        f1_evaluator = CERerankingEvaluator(dev_samples, name="custom-dev")
-        evaluator = SequentialEvaluator([accuracy_evaluator, f1_evaluator])
+        dev_evaluator = CERerankingEvaluator(samples=dev_samples, mrr_at_k=10)
     else:
         evaluator = None
 
@@ -66,7 +80,7 @@ def train(config):
     # Train the model
     model.fit(
         train_dataloader=train_dataloader,
-        evaluator=evaluator,
+        evaluator=dev_evaluator,
         epochs=num_epochs,
         evaluation_steps=config['eval_steps'] if evaluator else None,
         warmup_steps=warmup_steps,
