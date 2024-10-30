@@ -28,21 +28,27 @@ def pipeline(model_name, corpus, predicts, output_k=10, max_length=512):
 
     topk = len(predicts[0]['relevant'])
 
-    def write_to_txt(fo, i):
+    assert topk >= output_k
+
+    def write_to_txt(fo, i, enable_filter=False):
         predict_id = batched_predict_ids[i * topk]
         relevant = batched_relevant_ids[i * topk:(i + 1) * topk]
         score_slice = scores[i * topk:(i + 1) * topk]
         sorted_results = sorted(zip(score_slice, relevant), key=lambda x: -x[0])[:output_k]
-        if ((batched_relevant_scores[i * topk] - batched_relevant_scores[i * topk + 1] >= embed_threshold)
-                and ((batched_relevant_scores[i * topk] - batched_relevant_scores[i * topk + 1]) /
-                    (batched_relevant_scores[i * topk + 1] - batched_relevant_scores[i * topk + 2]) >= embed_threshold_ratio)):
-            sorted_results = zip(score_slice[:output_k], relevant[:output_k])
+        if enable_filter:
+            if ((batched_relevant_scores[i * topk] - batched_relevant_scores[i * topk + 1] >= embed_threshold)
+                    and ((batched_relevant_scores[i * topk] - batched_relevant_scores[i * topk + 1]) /
+                        (batched_relevant_scores[i * topk + 1] - batched_relevant_scores[i * topk + 2]) >= embed_threshold_ratio)):
+                sorted_results = zip(score_slice[:output_k], relevant[:output_k])
         fo.write(str(predict_id) + ' ' + ' '.join([str(x[1]) for x in sorted_results]) + '\n')
         outputs.append({
             'id': predict_id,
             'text': public_test[predict_id],
             'relevant': [x[1] for x in sorted_results],
         })
+
+    def threshold_filter(scores, threshold=embed_threshold, ratio=embed_threshold_ratio):
+        return ((scores[0] - scores[1] >= threshold) and ((scores[0] - scores[1]) / (scores[1] - scores[2]) >= ratio))
 
     def extend_batch(query, relevant_contexts, predict):
         batched_queries.extend([query] * len(relevant_contexts))
@@ -66,9 +72,18 @@ def pipeline(model_name, corpus, predicts, output_k=10, max_length=512):
     
     with open(config['output_predict_txt'], 'w') as fo:
         for k, predict in pbar:
-            query = public_test[predict['id']]
-            relevant_contexts = [corpus[context] for context in predict['relevant']]
-            extend_batch(query, relevant_contexts, predict)
+            if threshold_filter(predict['score']) == False:
+                query = public_test[predict['id']]
+                relevant_contexts = [corpus[context] for context in predict['relevant']]
+                extend_batch(query, relevant_contexts, predict)
+            else:
+                fo.write(str(predict['id']) + ' ' + ' '.join([str(x) for x in predict['relevant'][:output_k]]) + '\n')
+                outputs.append({
+                    'id': predict['id'],
+                    'text': public_test[predict['id']],
+                    'relevant': predict['relevant'][:output_k],
+                })
+                continue
 
             if len(batched_queries) == batch_size * len(relevant_contexts):
                 scores = model.predict(list(zip(batched_queries, batched_relevant_contexts)), batch_size=batch_size)
@@ -81,7 +96,7 @@ def pipeline(model_name, corpus, predicts, output_k=10, max_length=512):
         if batched_queries:
             scores = model.predict(list(zip(batched_queries, batched_relevant_contexts)))
             for i in range(len(batched_queries) // topk):
-                write_to_txt(fo, i)
+                write_to_txt(fo, i, enable_filter=True)
         save_to_json(outputs, config['output_reranked_json'], indent=4)
         return os.path.abspath(config['output_predict_txt']), os.path.abspath(config['output_reranked_json'])
 
