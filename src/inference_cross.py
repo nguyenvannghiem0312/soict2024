@@ -2,7 +2,7 @@ import logging
 import warnings
 import os
 from tqdm.auto import tqdm
-from utils.io import read_json
+from utils.io import read_json, save_to_json
 
 from sentence_transformers import LoggingHandler
 from sentence_transformers.cross_encoder import CrossEncoder
@@ -82,7 +82,8 @@ def pipeline(model_name, corpus, predicts, output_k=10, max_length=512):
             scores = model.predict(list(zip(batched_queries, batched_relevant_contexts)))
             for i in range(len(batched_queries) // topk):
                 write_to_txt(fo, i)
-        return os.path.abspath(config['output_predict_txt'])
+        save_to_json(outputs, config['output_reranked_json'], indent=4)
+        return os.path.abspath(config['output_predict_txt']), os.path.abspath(config['output_reranked_json'])
 
 if __name__ == '__main__':
     config = read_json(path="configs/infer_cross.json")

@@ -4,6 +4,7 @@
     "output_predict_txt": "outputs/predict.txt",
     "output_predict_json": "outputs/predict.json",
     "output_detailed_predict_json": "outputs/detailed_predict.json",
+    "output_reranked_json": "outputs/predict_reranked.json",
     "model_name": "Alibaba-NLP/gte-multilingual-reranker-base",
     "top_k": 10,
     "batch_size": 64,
