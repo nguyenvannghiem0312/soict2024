@@ -1,10 +1,10 @@
 {
-    "model": "Alibaba-NLP/gte-multilingual-reranker-base",
+    "model": "doc2query/msmarco-vietnamese-mt5-base-v1",
+    "max_source_length": 1024,
+    "max_target_length": 82,
     "train_path": "data/Train/train.json",
-    "corpus_dev_path": "data/Dev/corpus_dev.json",
-    "query_dev_path": "data/Dev/query_dev.json",
-    "cross_dev_path": "data/Dev/cross_dev.json",
     "output_dir": "outputs/test",
+    "eval_size": 1000,
     "batch_size": 4,
     "num_train_epochs": 1,
     "warmup_ratio": 0.1,
@@ -16,8 +16,6 @@
     "save_steps": 100,
     "save_total_limit": 2,
     "logging_steps": 10,
-    "load_best_model_at_end": true,
-    "metric_for_best_model": "MRR@10",
     "learning_rate": 5e-5,
-    "run_name": "cross"
+    "run_name": "doc2query"
 }

@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 def load_model(model_name='Alibaba-NLP/gte-multilingual-reranker-base', max_length=512):
     model = CrossEncoder(model_name=model_name, trust_remote_code=True, max_length=max_length)
-    model.model.config.max_position_embeddings = max_length
     model.model.to('cuda')
     return model
 
@@ -25,17 +24,39 @@ def pipeline(model_name, corpus, predicts, output_k=10, max_length=512):
     batched_predict_ids = []
     batched_relevant_ids = []
     batched_relevant_scores = []
-    
+    outputs = []
+
+    topk = len(predicts[0]['relevant'])
+
     def write_to_txt(fo, i):
-        predict_id = batched_predict_ids[i * 20]
-        relevant = batched_relevant_ids[i * 20:(i + 1) * 20]
-        score_slice = scores[i * 20:(i + 1) * 20]
+        predict_id = batched_predict_ids[i * topk]
+        relevant = batched_relevant_ids[i * topk:(i + 1) * topk]
+        score_slice = scores[i * topk:(i + 1) * topk]
         sorted_results = sorted(zip(score_slice, relevant), key=lambda x: -x[0])[:output_k]
-        if ((batched_relevant_scores[i * 20] - batched_relevant_scores[i * 20 + 1] >= embed_threshold)
-                and ((batched_relevant_scores[i * 20] - batched_relevant_scores[i * 20 + 1]) /
-                    (batched_relevant_scores[i * 20 + 1] - batched_relevant_scores[i * 20 + 2]) >= embed_threshold_ratio)):
+        if ((batched_relevant_scores[i * topk] - batched_relevant_scores[i * topk + 1] >= embed_threshold)
+                and ((batched_relevant_scores[i * topk] - batched_relevant_scores[i * topk + 1]) /
+                    (batched_relevant_scores[i * topk + 1] - batched_relevant_scores[i * topk + 2]) >= embed_threshold_ratio)):
             sorted_results = zip(score_slice[:output_k], relevant[:output_k])
         fo.write(str(predict_id) + ' ' + ' '.join([str(x[1]) for x in sorted_results]) + '\n')
+        outputs.append({
+            'id': predict_id,
+            'text': public_test[predict_id],
+            'relevant': [x[1] for x in sorted_results],
+        })
+
+    def extend_batch(query, relevant_contexts, predict):
+        batched_queries.extend([query] * len(relevant_contexts))
+        batched_relevant_contexts.extend(relevant_contexts)
+        batched_predict_ids.extend([predict['id']] * len(relevant_contexts))
+        batched_relevant_ids.extend(predict['relevant'])
+        batched_relevant_scores.extend(predict['score'])
+
+    def clear_batch():
+        batched_queries.clear()
+        batched_relevant_contexts.clear()
+        batched_predict_ids.clear()
+        batched_relevant_ids.clear()
+        batched_relevant_scores.clear()
 
     model = load_model(model_name, max_length=max_length)
     pbar = tqdm(enumerate(predicts), total=len(predicts))
@@ -47,31 +68,21 @@ def pipeline(model_name, corpus, predicts, output_k=10, max_length=512):
         for k, predict in pbar:
             query = public_test[predict['id']]
             relevant_contexts = [corpus[context] for context in predict['relevant']]
-            batched_queries.extend([query] * len(relevant_contexts))
-            batched_relevant_contexts.extend(relevant_contexts)
-            batched_predict_ids.extend([predict['id']] * len(relevant_contexts))
-            batched_relevant_ids.extend(predict['relevant'])
-            batched_relevant_scores.extend(predict['score'])
+            extend_batch(query, relevant_contexts, predict)
 
             if len(batched_queries) == batch_size * len(relevant_contexts):
                 scores = model.predict(list(zip(batched_queries, batched_relevant_contexts)), batch_size=batch_size)
-                assert len(scores) == batch_size * 20
+                assert len(scores) == batch_size * topk
                 for i in range(batch_size):
                     write_to_txt(fo, i)
-
-                # Clear batched lists after processing
-                batched_queries.clear()
-                batched_relevant_contexts.clear()
-                batched_predict_ids.clear()
-                batched_relevant_ids.clear()
-                batched_relevant_scores.clear()
+                clear_batch()
 
         # Process any remaining queries
         if batched_queries:
             scores = model.predict(list(zip(batched_queries, batched_relevant_contexts)))
-            for i in range(len(batched_queries) // 20):
+            for i in range(len(batched_queries) // topk):
                 write_to_txt(fo, i)
-        return os.path.abspath(config['output_predict_txt']), mrr_score
+        return os.path.abspath(config['output_predict_txt'])
 
 if __name__ == '__main__':
     config = read_json(path="configs/infer_cross.json")
@@ -81,7 +92,7 @@ if __name__ == '__main__':
     corpus = {doc['id']: doc['text'] for doc in corpus}
     public_test = {test['id']: test['text'] for test in predicts}
 
-    results, mrr_score = pipeline(
+    results = pipeline(
         model_name=config['model_name'],
         corpus=corpus,
         predicts=predicts,
