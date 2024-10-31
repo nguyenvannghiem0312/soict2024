@@ -1,0 +1,14 @@
+{
+    "stopwords_path": "stopwords.csv",
+    "corpus_path": "data/Legal Document Retrieval/corpus.json",
+    "train_path": "data/Train/train.json",
+    "query_path": "data/Legal Document Retrieval/public_test.json",
+    "result_path": "outputs/bm25_result.json",
+    "generate_path": "outputs/bm25_generate.json",
+    "create_index": false,
+    "hub_id": "Turbo-AI/corpus-index",
+    "top_k": 3,
+    "is_dev": false,
+    "is_test": false,
+    "is_generate": true
+}
