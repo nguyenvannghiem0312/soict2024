@@ -29,7 +29,7 @@ def retrieve_query(corpus, query, retriever, preprocessor, top_k=3):
         'id': query['id'],
         'text': query['text'],
         'relevant': relevants,
-        'scores': (scores / max_score).tolist()
+        'score': (scores / max_score).tolist()
     }
     return result
 
@@ -67,9 +67,7 @@ def generate(corpus, queries, retriever, preprocessor, top_k=3):
         results.append(query)
     return results
 
-if __name__ == "__main__":
-    config = read_json('configs/bm25s_config.json')
-
+def pipeline_bm25(config):
     stopwords_file = config["stopwords_path"]
     corpus_file = config["corpus_path"]
     hub_id = config["hub_id"]
@@ -82,21 +80,28 @@ if __name__ == "__main__":
     if config["create_index"]:
         list_corpus = [item['text'] for item in corpus]
         retriever = index_and_save(list_corpus, preprocessor, hub_path=hub_id)
+    else:
+        retriever = load_index_from_hub(hub_path=hub_id)
 
-    retriever = load_index_from_hub(hub_path = hub_id)
     queries = read_json(config['query_path'])
 
-    if config["is_dev"]:
+    result, mrr_score = [], 0
+
+    if config.get("is_dev", False):
         result, mrr_score = eval_dev(corpus, queries, retriever, preprocessor, top_k=top_k)
-        print("MRR score: ", mrr_score)
-        save_to_json(result, config['result_path'])
+        print("MRR score:", mrr_score)
 
-    if config["is_test"]:
+    if config.get("is_test", False):
         result = eval_test(corpus, queries, retriever, preprocessor, top_k=top_k)
-        save_to_json(result, config['result_path'])
-
-    if config["is_generate"]:
+        
+    if config.get("is_generate", False):
         queries = read_json(config['train_path'])
         result = generate(corpus, queries, retriever, preprocessor, top_k=3)
-        save_to_json(result, config['generate_path'])
+    
+    return result, mrr_score
+
+if __name__ == "__main__":
+    config = read_json('configs/bm25s_config.json')
+    result, mrr_score = pipeline_bm25(config)
+    save_to_json(result, config['result_path']) 
 
