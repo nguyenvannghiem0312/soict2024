@@ -64,3 +64,23 @@ def save_to_txt(data: Any, file_path: str) -> None:
         print(f"Nội dung đã được lưu vào {file_path}.")
     except Exception as e:
         print(f"Có lỗi xảy ra: {e}")
+
+def convert_results(input_list):
+    """
+    Convert input results to the desired output format.
+
+    Args:
+    - input_list (list of dict): A list where each dict contains the fields 'id', 'relevant', etc.
+
+    Returns:
+    - list of list: Each inner list contains [query_id, relevant_id_1, relevant_id_2, ...].
+    """
+    output_list = []
+    
+    for item in input_list:
+        query_id = item["id"]
+        relevant_ids = item["relevant"]
+        # Append the list in the format [query_id, relevant_id_1, relevant_id_2, ...]
+        output_list.append([query_id] + relevant_ids)
+    
+    return output_list
