@@ -1,4 +1,8 @@
-# Soict
+# Soict-2024
+
+```
+cd src
+```
 
 run bm25
 ```
