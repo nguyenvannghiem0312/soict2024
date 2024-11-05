@@ -1,10 +1,10 @@
 from tqdm import tqdm
-from utils.io import read_json, save_to_json
+from utils.io import read_json, save_to_json, save_to_txt, convert_results
 from inference_bm25s import pipeline_bm25
 from inference_sbert import pipeline
 
 def combine_bm25_embedding_results(bm25_results, embedding_results, ratio=(0.3, 0.7), top_k=10):
-    combined_results = {}
+    combined_results = []
 
     for query in tqdm(bm25_results):
         query_id = query['id']
@@ -29,12 +29,14 @@ def combine_bm25_embedding_results(bm25_results, embedding_results, ratio=(0.3, 
         
         combined_sorted = sorted(combined_dict.items(), key=lambda x: x[1], reverse=True)[:top_k]
         
-        combined_results[query_id] = {
+        combined_results.append(
+            {
             'id': query_id,
             'text': query['text'],
             'relevant': [doc_id for doc_id, _ in combined_sorted],
             'score': [score for _, score in combined_sorted]
-        }
+            }
+        )
 
     return combined_results
 
@@ -119,6 +121,9 @@ if __name__ == '__main__':
         config=config,
         benchmark=None
     )
+    save_to_json(combined_results, 'outputs/predict.json')
+    save_to_txt(convert_results(combined_results), 'outputs/predict.txt')
+
     mrr_score = calculate_mrr(
         benchmark=benchmark,
         combined_results=combined_results
