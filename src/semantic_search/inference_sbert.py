@@ -12,10 +12,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def load_model(model_name='Turbo-AI/me5-base-v3__trim-vocab'):
-    if 'm2v' not in model_name:
-        model = SentenceTransformer(model_name, trust_remote_code=True)
-    else:
-        model = load_model2vec(model_name)
+    model = SentenceTransformer(model_name)
     return model
 
 def encode_corpus(model: SentenceTransformer, corpus, corpus_embedding_path='outputs/corpus_embeddings.pkl', is_tokenizer=True):

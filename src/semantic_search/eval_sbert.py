@@ -17,10 +17,7 @@ def load_config(config_path="configs/sbert.json"):
 
 def load_model(model_name):
     """Load the SentenceTransformer model."""
-    if 'm2v' not in model_name:
-        model = SentenceTransformer(model_name)
-    else:
-        model = load_model2vec(model_name)
+    model = SentenceTransformer(model_name)
     return model
 
 def load_evaluator(corpus_dev_path, query_dev_path):
@@ -39,6 +36,7 @@ def load_evaluator(corpus_dev_path, query_dev_path):
         accuracy_at_k=[10],
         precision_recall_at_k= [10],
         map_at_k= [10],
+        show_progress_bar=True
     )
     return dev_evaluator
 
