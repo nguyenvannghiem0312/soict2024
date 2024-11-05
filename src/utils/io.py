@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 from typing import Any
-
+from datasets import load_dataset
 import jsonlines
 
 
@@ -18,6 +18,15 @@ def read_json(path: str = None) -> Any:
         json_data = json.load(file)
     return json_data
 
+def read_json_or_dataset(path: str = None, split: str = "train") -> Any:
+    """
+    Reads a JSON file from the given path.
+    """
+    try:
+        json_data = read_json(path=path)
+    except:
+        json_data = load_dataset(path)[split].to_list()
+    return json_data
 
 def save_to_json(data: Any, file_path: str, indent: int = 2) -> None:
     """

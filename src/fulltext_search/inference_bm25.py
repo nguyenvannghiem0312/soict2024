@@ -3,11 +3,13 @@ from tqdm.auto import tqdm
 from pyvi import ViTokenizer
 from collections import Counter
 from rank_bm25 import BM25Okapi
-from utils.io import read_json, save_to_json, save_to_txt
+from utils.io import read_json_or_dataset, save_to_json, save_to_txt
 from utils.dataset import search_by_id
+import json
+import argparse
 
 def tokenize_corpus_and_save(corpus_path):
-    corpus = read_json(corpus_path)
+    corpus = read_json_or_dataset(corpus_path)
     tokenized_corpus = [ViTokenizer.tokenize(doc['text']).split() for doc in tqdm(corpus)]
     token_frequency = Counter(token for doc in tokenized_corpus for token in doc)
 
@@ -27,7 +29,7 @@ def get_top_k_relevant_corpus(query, corpus, bm25, k=10):
     return result
 
 def public_test_eval(test_path, tokenized_corpus, corpus, top_k):
-    test_data = read_json(test_path)
+    test_data = read_json_or_dataset(test_path)
 
     bm25 = BM25Okapi(tokenized_corpus)
     
@@ -40,7 +42,7 @@ def public_test_eval(test_path, tokenized_corpus, corpus, top_k):
     return results
 
 def negative_generation(train_path, tokenized_corpus, corpus):
-    train_data = read_json(train_path)
+    train_data = read_json_or_dataset(train_path)
     
     bm25 = BM25Okapi(tokenized_corpus)
 
@@ -55,11 +57,10 @@ def negative_generation(train_path, tokenized_corpus, corpus):
 
     return train_data
 
-def main():
-    config = read_json('configs/bm25_config.json')
-    corpus = read_json(config['corpus_path'])
+def pipeline_bm25(config):
+    corpus = read_json_or_dataset(config['corpus_path'])
     try:
-        tokenized_corpus = read_json(config['tokenizer_corpus_path'])
+        tokenized_corpus = read_json_or_dataset(config['tokenizer_corpus_path'])
     except FileNotFoundError:
         tokenized_corpus, token_frequency = tokenize_corpus_and_save(config['corpus_path'])
         save_to_json(data=tokenized_corpus, file_path=config['tokenizer_corpus_path'])
@@ -73,5 +74,18 @@ def main():
         results = negative_generation(train_path=config["train_path"], tokenized_corpus=tokenized_corpus, corpus=corpus)
         save_to_json(data=results, file_path=config["generative_data_path"])
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run BM25 pipeline with configuration.")
+    parser.add_argument(
+        "--config_path", 
+        type=str, 
+        default="src/configs/bm25_config.json", 
+        help="Path to the configuration JSON file."
+    )
+    
+    args = parser.parse_args()
+    config = read_json_or_dataset(args.config_path)
+
+    print("Config: ", json.dumps(config, indent=4, ensure_ascii=False))
+    result, mrr_score = pipeline_bm25(config)
+    save_to_json(result, config['result_path'])

@@ -1,8 +1,10 @@
 from utils.preprocess import TextPreprocessor
-from utils.io import read_json, save_to_json
+from utils.io import read_json_or_dataset, save_to_json
 from utils.dataset import search_by_id
 from tqdm import tqdm
 from bm25s.hf import BM25HF
+import json
+import argparse
 
 def splitter(text, preprocessor):
     return preprocessor.preprocess(text).split()
@@ -75,7 +77,7 @@ def pipeline_bm25(config):
 
     preprocessor = TextPreprocessor(stopwords_file=stopwords_file)
 
-    corpus = read_json(corpus_file)
+    corpus = read_json_or_dataset(corpus_file)
 
     if config["create_index"]:
         list_corpus = [item['text'] for item in corpus]
@@ -83,7 +85,7 @@ def pipeline_bm25(config):
     else:
         retriever = load_index_from_hub(hub_path=hub_id)
 
-    queries = read_json(config['query_path'])
+    queries = read_json_or_dataset(config['query_path'])
 
     result, mrr_score = [], 0
 
@@ -95,13 +97,24 @@ def pipeline_bm25(config):
         result = eval_test(corpus, queries, retriever, preprocessor, top_k=top_k)
         
     if config.get("is_generate", False):
-        queries = read_json(config['train_path'])
+        queries = read_json_or_dataset(config['train_path'])
         result = generate(corpus, queries, retriever, preprocessor, top_k=3)
     
     return result, mrr_score
 
 if __name__ == "__main__":
-    config = read_json('configs/bm25s_config.json')
+    parser = argparse.ArgumentParser(description="Run BM25 pipeline with configuration.")
+    parser.add_argument(
+        "--config_path", 
+        type=str, 
+        default="src/configs/bm25s_config.json", 
+        help="Path to the configuration JSON file."
+    )
+    
+    args = parser.parse_args()
+    config = read_json_or_dataset(args.config_path)
+
+    print("Config: ", json.dumps(config, indent=4, ensure_ascii=False))
     result, mrr_score = pipeline_bm25(config)
-    save_to_json(result, config['result_path']) 
+    save_to_json(result, config['result_path'])
 

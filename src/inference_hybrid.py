@@ -1,6 +1,6 @@
 from tqdm import tqdm
 from utils.io import read_json, save_to_json, save_to_txt, convert_results
-from inference_bm25s import pipeline_bm25
+from fulltext_search.inference_bm25s import pipeline_bm25
 from inference_sbert import pipeline
 
 def combine_bm25_embedding_results(bm25_results, embedding_results, ratio=(0.3, 0.7), top_k=10):
