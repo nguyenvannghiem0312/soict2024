@@ -7,11 +7,16 @@ from pyvi.ViTokenizer import tokenize
 import torch
 from tqdm import tqdm
 from utils.io import save_to_txt, read_json_or_dataset, save_to_json
+from utils.model import load_model2vec
 import warnings
 warnings.filterwarnings("ignore")
 
 def load_model(model_name='Turbo-AI/me5-base-v3__trim-vocab'):
-    return SentenceTransformer(model_name, trust_remote_code=True)
+    if 'm2v' not in model_name:
+        model = SentenceTransformer(model_name, trust_remote_code=True)
+    else:
+        model = load_model2vec(model_name)
+    return model
 
 def encode_corpus(model: SentenceTransformer, corpus, corpus_embedding_path='outputs/corpus_embeddings.pkl', is_tokenizer=True):
     if is_tokenizer == True:

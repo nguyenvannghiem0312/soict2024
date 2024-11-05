@@ -5,6 +5,7 @@ from sentence_transformers import (
 from sentence_transformers.evaluation import SimilarityFunction, InformationRetrievalEvaluator
 from utils.dataset import process_data, process_dev
 from utils.io import read_json_or_dataset, save_to_json
+from utils.model import load_model2vec
 
 import argparse
 import json
@@ -16,7 +17,10 @@ def load_config(config_path="configs/sbert.json"):
 
 def load_model(model_name):
     """Load the SentenceTransformer model."""
-    model = SentenceTransformer(model_name)
+    if 'm2v' not in model_name:
+        model = SentenceTransformer(model_name)
+    else:
+        model = load_model2vec(model_name)
     return model
 
 def load_evaluator(corpus_dev_path, query_dev_path):
