@@ -2,7 +2,9 @@ import logging
 from transformers import Seq2SeqTrainer, AutoModelForSeq2SeqLM, AutoTokenizer, Seq2SeqTrainingArguments
 import sys
 import torch
-from utils.io import read_json
+from utils.io import read_json_or_dataset
+import argparse
+import json
 
 def setup_logging():
     logging.basicConfig(
@@ -12,7 +14,7 @@ def setup_logging():
     )
 
 def load_data(config):
-    train_data = read_json(path=config['train_path'])
+    train_data = read_json_or_dataset(path=config['train_path'])
 
     train_pairs = []
     eval_pairs = []
@@ -67,9 +69,8 @@ def data_collator(examples, tokenizer, max_source_length, max_target_length, fp1
     model_inputs["labels"] = torch.tensor(labels["input_ids"])
     return model_inputs
 
-def main():
+def main(config):
     setup_logging()
-    config = read_json(path="configs/doc2query_config.json")
     train_pairs, eval_pairs = load_data(config)
     model, tokenizer = setup_model_and_tokenizer(config["model_name"])
 
@@ -88,4 +89,17 @@ def main():
     trainer.save_model()
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run training doc2query with configuration.")
+    parser.add_argument(
+        "--config_path", 
+        type=str, 
+        default="src/configs/doc2query_config.json", 
+        help="Path to the configuration JSON file."
+    )
+    
+    args = parser.parse_args()
+    config = read_json_or_dataset(args.config_path)
+
+    print("Config: ", json.dumps(config, indent=4, ensure_ascii=False))
+
+    main(config=config)

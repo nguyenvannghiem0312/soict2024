@@ -38,3 +38,13 @@ run inference cross
 ```
 python cross_encoder/inference_cross.py --config_path "configs/infer_cross.json"
 ```
+
+run training doc2query
+```
+python doc2query/training_doc2query.py --config_path "configs/doc2query_config.json"
+```
+
+run inference doc2query
+```
+python doc2query/inference_doc2query.py --config_path "configs/infer_doc2query.json"
+```
