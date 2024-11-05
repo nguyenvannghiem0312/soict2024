@@ -28,3 +28,13 @@ run eval sbert in dev dataset
 ```
 python semantic_search/eval_sbert.py --config_path "configs/sbert.json"
 ```
+
+run training cross
+```
+python cross_encoder/training_cross.py --config_path "configs/cross.json"
+```
+
+run inference cross
+```
+python cross_encoder/inference_cross.py --config_path "configs/infer_cross.json"
+```

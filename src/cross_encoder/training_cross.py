@@ -7,8 +7,11 @@ from sentence_transformers.cross_encoder import CrossEncoder
 from sentence_transformers.cross_encoder.evaluation import CERerankingEvaluator
 from sentence_transformers.evaluation import SequentialEvaluator
 from sentence_transformers.readers import InputExample
-from utils.io import read_json
+from utils.io import read_json_or_dataset
 from utils.dataset import search_by_id
+
+import argparse
+import json
 
 logging.basicConfig(
     format="%(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO, handlers=[LoggingHandler()]
@@ -22,7 +25,7 @@ def load_custom_data(config):
     filepath = config['train_path']
     train_samples = []
 
-    data = read_json(filepath)
+    data = read_json_or_dataset(filepath)
     for item in data:
         query = item['text']
         for relevant in item['relevant']:
@@ -33,20 +36,20 @@ def load_custom_data(config):
     return train_samples
 
 def load_eval(config):
-    corpus_dev = read_json(config["corpus_dev_path"])
-    query_dev = read_json(config["query_dev_path"])
-    cross_dev = read_json(config["cross_dev_path"])
+    corpus_dev = read_json_or_dataset(config["corpus_dev_path"])
+    query_dev = read_json_or_dataset(config["query_dev_path"])
+    cross_dev = read_json_or_dataset(config["cross_dev_path"])
 
     dev_samples = []
 
     for item in cross_dev:
-        query = search_by_id(data=query_dev, search_id=item['id'])['text']
-        relevants = search_by_id(data=query_dev, search_id=item['id'])['relevant']
+        query = read_json_or_dataset(data=query_dev, search_id=item['id'])['text']
+        relevants = read_json_or_dataset(data=query_dev, search_id=item['id'])['relevant']
 
         positive = [rel['text'] for rel in relevants]
         negative = []
         for id in item['relevant']:
-            context = search_by_id(data=corpus_dev, search_id=id)['text']
+            context = read_json_or_dataset(data=corpus_dev, search_id=id)['text']
             if context not in positive:
                 negative.append(context)
 
@@ -90,5 +93,17 @@ def train(config):
     )
 
 if __name__ == "__main__":
-    config = read_json(path="configs/cross.json")
+    parser = argparse.ArgumentParser(description="Run training cross with configuration.")
+    parser.add_argument(
+        "--config_path", 
+        type=str, 
+        default="src/configs/cross.json", 
+        help="Path to the configuration JSON file."
+    )
+    
+    args = parser.parse_args()
+    config = read_json_or_dataset(args.config_path)
+
+    print("Config: ", json.dumps(config, indent=4, ensure_ascii=False))
+
     train(config=config)

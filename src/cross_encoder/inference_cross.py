@@ -2,10 +2,13 @@ import logging
 import warnings
 import os
 from tqdm.auto import tqdm
-from utils.io import read_json, save_to_json
+from utils.io import read_json_or_dataset, save_to_json
 
 from sentence_transformers import LoggingHandler
 from sentence_transformers.cross_encoder import CrossEncoder
+
+import argparse
+import json
 warnings.filterwarnings("ignore")
 
 logging.basicConfig(
@@ -101,9 +104,21 @@ def pipeline(model_name, corpus, predicts, output_k=10, max_length=512):
         return os.path.abspath(config['output_predict_txt']), os.path.abspath(config['output_reranked_json'])
 
 if __name__ == '__main__':
-    config = read_json(path="configs/infer_cross.json")
-    corpus = read_json(config['corpus_path'])
-    predicts = read_json(path=config['output_detailed_predict_json'])
+    parser = argparse.ArgumentParser(description="Run inference cross with configuration.")
+    parser.add_argument(
+        "--config_path", 
+        type=str, 
+        default="src/configs/infer_cross.json", 
+        help="Path to the configuration JSON file."
+    )
+    
+    args = parser.parse_args()
+    config = read_json_or_dataset(args.config_path)
+
+    print("Config: ", json.dumps(config, indent=4, ensure_ascii=False))
+    
+    corpus = read_json_or_dataset(config['corpus_path'])
+    predicts = read_json_or_dataset(path=config['output_detailed_predict_json'])
     output_k = config['top_k']
     corpus = {doc['id']: doc['text'] for doc in corpus}
     public_test = {test['id']: test['text'] for test in predicts}
