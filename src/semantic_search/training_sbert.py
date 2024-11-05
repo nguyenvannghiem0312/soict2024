@@ -1,6 +1,4 @@
 import logging
-import sys
-from datetime import datetime
 from datasets import load_dataset, Dataset
 from sentence_transformers import (
     SentenceTransformer,
@@ -8,17 +6,21 @@ from sentence_transformers import (
     SentenceTransformerTrainingArguments,
     losses,
 )
-from sentence_transformers.evaluation import EmbeddingSimilarityEvaluator, SimilarityFunction, InformationRetrievalEvaluator
+from sentence_transformers.evaluation import SimilarityFunction, InformationRetrievalEvaluator
 from sentence_transformers.training_args import BatchSamplers
 
 from utils.dataset import process_data, process_dev
-from utils.io import read_json, save_to_json
+from utils.io import read_json_or_dataset, save_to_json
+
+import argparse
+import json
+
 
 logging.basicConfig(format="%(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S", level=logging.INFO)
 
 def load_config(config_path="configs/sbert.json"):
     """Load the configuration from a JSON file."""
-    config = read_json(config_path)
+    config = read_json_or_dataset(config_path)
     return config
 
 def load_model(model_name):
@@ -30,7 +32,7 @@ def load_model(model_name):
 
 def load_datasets(train_path):
     """Load the NLI training and evaluation datasets."""
-    train_datasets = read_json(train_path)
+    train_datasets = read_json_or_dataset(train_path)
     train_datasets = process_data(train=train_datasets)
     
     datasets = {}
@@ -72,8 +74,8 @@ def define_loss(model, config, guide=None):
 
 def load_evaluator(corpus_dev_path, query_dev_path):
     """Load the benchmark dataset and create an evaluator."""
-    corpus_dev = read_json(corpus_dev_path)
-    query_dev = read_json(query_dev_path)
+    corpus_dev = read_json_or_dataset(corpus_dev_path)
+    query_dev = read_json_or_dataset(query_dev_path)
 
     dev_datasets = process_dev(corpus=corpus_dev, query=query_dev)
     dev_evaluator = InformationRetrievalEvaluator(
@@ -126,9 +128,7 @@ def train_model(model, args, train_dataset, train_loss, dev_evaluator):
     trainer.train()
 
 
-def main():
-    config = load_config(config_path="configs/sbert.json")
-
+def main(config):
     model = load_model(config["model"])
     guide = None
     if config["guide_model"] != "":
@@ -145,4 +145,17 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run training SBERT with configuration.")
+    parser.add_argument(
+        "--config_path", 
+        type=str, 
+        default="src/configs/sbert.json", 
+        help="Path to the configuration JSON file."
+    )
+    
+    args = parser.parse_args()
+    config = read_json_or_dataset(args.config_path)
+
+    print("Config: ", json.dumps(config, indent=4, ensure_ascii=False))
+
+    main(config)

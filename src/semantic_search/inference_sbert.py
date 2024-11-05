@@ -1,15 +1,16 @@
 import pickle
 import numpy as np
-from sentence_transformers import SentenceTransformer, util
+import argparse
+import json
+from sentence_transformers import SentenceTransformer
 from pyvi.ViTokenizer import tokenize
 import torch
 from tqdm import tqdm
-from utils.io import save_to_txt, read_json, save_to_json
-from utils.dataset import search_by_id
+from utils.io import save_to_txt, read_json_or_dataset, save_to_json
 import warnings
 warnings.filterwarnings("ignore")
 
-def load_model(model_name='NghiemAbe/Vi-Legal-Bi-Encoder-v2'):
+def load_model(model_name='Turbo-AI/me5-base-v3__trim-vocab'):
     return SentenceTransformer(model_name, trust_remote_code=True)
 
 def encode_corpus(model: SentenceTransformer, corpus, corpus_embedding_path='outputs/corpus_embeddings.pkl', is_tokenizer=True):
@@ -120,11 +121,22 @@ def pipeline(model_name, corpus, query, benchmark, corpus_embedding_path='output
 
 
 if __name__ == '__main__':
-    config = read_json(path="configs/infer_sbert.json")
+    parser = argparse.ArgumentParser(description="Run inference SBERT with configuration.")
+    parser.add_argument(
+        "--config_path", 
+        type=str, 
+        default="src/configs/infer_sbert.json", 
+        help="Path to the configuration JSON file."
+    )
+    
+    args = parser.parse_args()
+    config = read_json_or_dataset(args.config_path)
+
+    print("Config: ", json.dumps(config, indent=4, ensure_ascii=False))
     
     # Load corpus and query from JSON files
-    corpus = read_json(config['corpus_path'])
-    query = read_json(config['query_path'])
+    corpus = read_json_or_dataset(config['corpus_path'])
+    query = read_json_or_dataset(config['query_path'])
 
     # Call the pipeline function
     results, results_json, detailed_results, mrr_score = pipeline(

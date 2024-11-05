@@ -4,11 +4,14 @@ from sentence_transformers import (
 )
 from sentence_transformers.evaluation import SimilarityFunction, InformationRetrievalEvaluator
 from utils.dataset import process_data, process_dev
-from utils.io import read_json, save_to_json
+from utils.io import read_json_or_dataset, save_to_json
+
+import argparse
+import json
 
 def load_config(config_path="configs/sbert.json"):
     """Load the configuration from a JSON file."""
-    config = read_json(config_path)
+    config = read_json_or_dataset(config_path)
     return config
 
 def load_model(model_name):
@@ -18,8 +21,8 @@ def load_model(model_name):
 
 def load_evaluator(corpus_dev_path, query_dev_path):
     """Load the benchmark dataset and create an evaluator."""
-    corpus_dev = read_json(corpus_dev_path)
-    query_dev = read_json(query_dev_path)
+    corpus_dev = read_json_or_dataset(corpus_dev_path)
+    query_dev = read_json_or_dataset(query_dev_path)
 
     dev_datasets = process_dev(corpus=corpus_dev, query=query_dev)
     dev_evaluator = InformationRetrievalEvaluator(
@@ -41,7 +44,18 @@ def eval_model(model, dev_evaluator):
     return results
 
 if __name__ == "__main__":
-    config = load_config(config_path="configs/sbert.json")
+    parser = argparse.ArgumentParser(description="Run eval SBERT in Dev dataset with configuration.")
+    parser.add_argument(
+        "--config_path", 
+        type=str, 
+        default="src/configs/sbert.json", 
+        help="Path to the configuration JSON file."
+    )
+    
+    args = parser.parse_args()
+    config = read_json_or_dataset(args.config_path)
+
+    print("Config: ", json.dumps(config, indent=4, ensure_ascii=False))
 
     model = load_model(config["model"])
 
