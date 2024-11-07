@@ -5,6 +5,7 @@ import logging
 import os
 
 import numpy as np
+from tqdm import tqdm
 from sklearn.metrics import ndcg_score
 
 logger = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ class CERerankingEvaluator:
         num_queries = 0
         num_positives = []
         num_negatives = []
-        for instance in self.samples:
+        for instance in tqdm(self.samples):
             query = instance["query"]
             positive = list(instance["positive"])
             negative = list(instance["negative"])

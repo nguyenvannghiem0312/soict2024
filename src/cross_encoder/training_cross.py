@@ -43,40 +43,50 @@ def load_eval(config):
     dev_samples = []
 
     for item in cross_dev:
-        query = read_json_or_dataset(data=query_dev, search_id=item['id'])['text']
-        relevants = read_json_or_dataset(data=query_dev, search_id=item['id'])['relevant']
+        try:
+            query = search_by_id(data=query_dev, search_id=item['id'])['text']
+            relevants = search_by_id(data=query_dev, search_id=item['id'])['relevant']
 
-        positive = [rel['text'] for rel in relevants]
-        negative = []
-        for id in item['relevant']:
-            context = read_json_or_dataset(data=corpus_dev, search_id=id)['text']
-            if context not in positive:
-                negative.append(context)
+            positive = [rel['text'] for rel in relevants]
+            negative = []
+            for id in item['relevant']:
+                context = search_by_id(data=corpus_dev, search_id=id)['text']
+                if context not in positive:
+                    negative.append(context)
 
-        dev_samples.append({
-            'query': query,
-            'positive': positive,
-            'negative': negative
-        })
+            dev_samples.append({
+                'query': query,
+                'positive': positive,
+                'negative': negative
+            })
+        except:
+            continue
     
     return dev_samples
 
 
 def train(config):
-    train_samples, dev_samples = load_custom_data(config)
-    train_batch_size = config['batch_size']
-    num_epochs = config['num_train_epochs']
     model_save_path = config['output_dir'] + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     model = CrossEncoder(config['model'], trust_remote_code=True)
-
-    train_dataloader = DataLoader(train_samples, shuffle=True, batch_size=train_batch_size)
     
+    dev_samples = load_eval(config=config)
+    print(len(dev_samples))
     if dev_samples:
         dev_evaluator = CERerankingEvaluator(samples=dev_samples, mrr_at_k=10)
     else:
         evaluator = None
 
+    if config['only_test'] == True:
+        mrr = dev_evaluator(model = model)
+        print(mrr)
+        return None
+    
+    train_samples = load_custom_data(config)
+    train_batch_size = config['batch_size']
+    num_epochs = config['num_train_epochs']
+
+    train_dataloader = DataLoader(train_samples, shuffle=True, batch_size=train_batch_size)
     warmup_steps = math.ceil(len(train_dataloader) * num_epochs * config['warmup_ratio'])
     logger.info(f"Warmup-steps: {warmup_steps}")
 
@@ -88,7 +98,6 @@ def train(config):
         evaluation_steps=config['eval_steps'] if evaluator else None,
         warmup_steps=warmup_steps,
         output_path=model_save_path,
-        evaluation_steps=config['eval_steps'],
         save_best_model=config['load_best_model_at_end'],
     )
 
