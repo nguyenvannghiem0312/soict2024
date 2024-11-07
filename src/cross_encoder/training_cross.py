@@ -35,17 +35,23 @@ def load_custom_data(config):
 
     return train_samples
 
-def load_eval(config):
+def threshold_filter(scores, threshold, ratio):
+    return (scores[0] - scores[1] >= threshold and 
+            (scores[0] - scores[1]) / (scores[1] - scores[2] + 0.00001) >= ratio)
+    
+def load_eval(config, threshold=0.2, ratio=2):
     corpus_dev = read_json_or_dataset(config["corpus_dev_path"])
     query_dev = read_json_or_dataset(config["query_dev_path"])
     cross_dev = read_json_or_dataset(config["cross_dev_path"])
 
     dev_samples = []
+    no_rerank_mrr = []  # no reranking
 
     for item in cross_dev:
         try:
             query = search_by_id(data=query_dev, search_id=item['id'])['text']
             relevants = search_by_id(data=query_dev, search_id=item['id'])['relevant']
+            scores = item['score']
 
             positive = [rel['text'] for rel in relevants]
             negative = []
@@ -54,15 +60,25 @@ def load_eval(config):
                 if context not in positive:
                     negative.append(context)
 
-            dev_samples.append({
-                'query': query,
-                'positive': positive,
-                'negative': negative
-            })
+            if threshold_filter(scores, threshold, ratio) == False:
+                dev_samples.append({
+                    'query': query,
+                    'positive': positive,
+                    'negative': negative,
+                })
+            else:
+                positive_ids = [rel['id'] for rel in relevants]
+                
+                relevant_predict = item['relevant']
+                
+                for idx, id_pred in enumerate(relevant_predict[:10]):
+                    if id_pred in positive_ids:
+                        no_rerank_mrr.append(1 / (1 + idx))
+                        break
         except:
             continue
-    
-    return dev_samples
+    print("MRR score no rerank: ", sum(no_rerank_mrr) / (len(cross_dev) - len(dev_samples)))
+    return dev_samples, no_rerank_mrr, len(cross_dev)
 
 
 def train(config):
@@ -70,8 +86,9 @@ def train(config):
 
     model = CrossEncoder(config['model'], trust_remote_code=True)
     
-    dev_samples = load_eval(config=config)
-    print(len(dev_samples))
+    dev_samples, no_rerank_mrr, len_samples = load_eval(config=config)
+    print("DEV: ", len(dev_samples))
+    print("No rerank: ", len(no_rerank_mrr))
     if dev_samples:
         dev_evaluator = CERerankingEvaluator(samples=dev_samples, mrr_at_k=10)
     else:
@@ -79,7 +96,8 @@ def train(config):
 
     if config['only_test'] == True:
         mrr = dev_evaluator(model = model)
-        print(mrr)
+        mrr_scores = (mrr * len(dev_samples) + sum(no_rerank_mrr)) / len_samples
+        print(mrr_scores)
         return None
     
     train_samples = load_custom_data(config)
