@@ -19,5 +19,6 @@
     "load_best_model_at_end": true,
     "metric_for_best_model": "MRR@10",
     "learning_rate": 5e-5,
-    "run_name": "cross"
+    "run_name": "cross",
+    "only_test": true
 }
