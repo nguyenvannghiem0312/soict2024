@@ -77,7 +77,7 @@ def load_eval(config, threshold=0.2, ratio=2):
                         break
         except:
             continue
-    print("MRR score no rerank: ", sum(no_rerank_mrr) / (len(cross_dev) - len(dev_samples)))
+    logger.info(f"MRR score no rerank: {sum(no_rerank_mrr) / (len(cross_dev) - len(dev_samples))}")
     return dev_samples, no_rerank_mrr, len(cross_dev)
 
 
@@ -87,12 +87,12 @@ def train(config):
     model = CrossEncoder(config['model'], trust_remote_code=True)
     
     dev_samples, no_rerank_mrr, len_samples = load_eval(config=config)
-    print("DEV: ", len(dev_samples))
-    print("No rerank: ", len(no_rerank_mrr))
+    logger.info(f"DEV: {len(dev_samples)}")
+    logger.info(f"No rerank: {len(no_rerank_mrr)}")
     if dev_samples:
         dev_evaluator = CERerankingEvaluator(samples=dev_samples, mrr_at_k=10)
     else:
-        evaluator = None
+        dev_evaluator = None
 
     if config['only_test'] == True:
         mrr = dev_evaluator(model = model)
@@ -113,7 +113,7 @@ def train(config):
         train_dataloader=train_dataloader,
         evaluator=dev_evaluator,
         epochs=num_epochs,
-        evaluation_steps=config['eval_steps'] if evaluator else None,
+        evaluation_steps=config['eval_steps'] if dev_evaluator else None,
         warmup_steps=warmup_steps,
         output_path=model_save_path,
         save_best_model=config['load_best_model_at_end'],
