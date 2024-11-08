@@ -3,14 +3,15 @@
     "corpus_path": "data/Legal Document Retrieval/corpus.json",
     "query_path": "data/Legal Document Retrieval/public_test.json",
     "benchmark": "data/Dev/query_dev.json",
-    "model_name": "Turbo-AI/me5-base-v3__trim-vocab",
-    "corpus_embedding_path": "outputs/corpus_embeddings_e5.pkl",
+    "model_name": "outputs/bge-m3-v0/checkpoint-4850",
+    "corpus_embedding_path": "outputs/corpus_embeddings_bge.pkl",
+    "max_length": 512,
     "create_index": false,
     "hub_id": "Turbo-AI/corpus-index",
     "top_k": 1000,
     "output_top_k": 10,
     "is_tokenizer": false,
     "is_test": true,
-    "bm25_weight": 0.3,
-    "emb_weight": 0.7
+    "bm25_weight": 0.15,
+    "emb_weight": 0.85
 }
