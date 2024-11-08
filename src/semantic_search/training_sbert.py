@@ -38,13 +38,13 @@ def load_datasets(config):
     train_datasets = process_data(train=train_datasets)
     
     datasets = {}
-    anchor = [item["anchor"] for item in train_datasets]
-    positive = [item["positive"] for item in train_datasets]
+    anchor = [config["query_prompt"] + item["anchor"] for item in train_datasets]
+    positive = [config["corpus_prompt"] + item["positive"] for item in train_datasets]
 
     datasets["anchor"] = anchor
     datasets["positive"] = positive
     if "negative" in train_datasets[0] and config["is_triplet"] == True:
-        negative = [item["negative"] for item in train_datasets]
+        negative = [config["corpus_prompt"] + item["negative"] for item in train_datasets]
         datasets["negative"] = negative
     logging.info(f"Train dataset: {len(datasets["anchor"])}")
     return Dataset.from_dict(datasets)
@@ -75,12 +75,12 @@ def define_loss(model, config, guide=None):
 
 
 
-def load_evaluator(corpus_dev_path, query_dev_path):
+def load_evaluator(config):
     """Load the benchmark dataset and create an evaluator."""
-    corpus_dev = read_json_or_dataset(corpus_dev_path)
-    query_dev = read_json_or_dataset(query_dev_path)
+    corpus_dev = read_json_or_dataset(config["corpus_dev_path"])
+    query_dev = read_json_or_dataset(config["query_dev_path"])
 
-    dev_datasets = process_dev(corpus=corpus_dev, query=query_dev)
+    dev_datasets = process_dev(corpus=corpus_dev, query=query_dev, query_prompt=config["query_prompt"], corpus_prompt=config["corpus_prompt"])
     dev_evaluator = InformationRetrievalEvaluator(
         queries=dev_datasets['queries'],
         corpus=dev_datasets['corpus'],
@@ -139,8 +139,7 @@ def main(config):
 
     train_dataset= load_datasets(config)
     train_loss = define_loss(model=model, config=config, guide=guide)
-    dev_evaluator = load_evaluator(corpus_dev_path=config["corpus_dev_path"], 
-                                   query_dev_path=config["query_dev_path"])
+    dev_evaluator = load_evaluator(config)
     args = define_training_args(config=config)
 
     # Start training the model

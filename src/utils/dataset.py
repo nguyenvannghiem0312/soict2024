@@ -64,14 +64,14 @@ def process_data(train):
     
     return output
 
-def process_dev(corpus, query):
+def process_dev(corpus, query, query_prompt="", corpus_prompt=""):
     queries = {}
     corpus_dict = {}
     relevant_docs = {}
 
     for q in query:
         qid = str(q['id'])
-        queries[qid] = q['text']
+        queries[qid] = query_prompt + q['text']
         
         # Xử lý relevant docs cho từng query
         relevant_set = set()
@@ -82,7 +82,7 @@ def process_dev(corpus, query):
 
     for c in corpus:
         cid = str(c['id'])
-        corpus_dict[cid] = c['text']
+        corpus_dict[cid] = corpus_prompt + c['text']
 
     return {
         "queries": queries,

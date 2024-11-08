@@ -2,6 +2,8 @@
     "model": "Turbo-AI/multilingual-e5-large-instruct__trim_vocab",
     "guide_model": "",
     "max_length": 512,
+    "query_prompt": "",
+    "corpus_prompt": "",
     "is_triplet": true,
     "loss": "CachedMultipleNegativesRankingLoss",
     "train_path": "Turbo-AI/train-triplet",

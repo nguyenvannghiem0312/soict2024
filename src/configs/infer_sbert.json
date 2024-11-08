@@ -8,5 +8,7 @@
     "model_name": "Turbo-AI/me5-base-v3__trim-vocab",
     "top_k": 20,
     "max_length": 512,
-    "is_tokenizer": false
+    "is_tokenizer": false,
+    "query_prompt": "",
+    "corpus_prompt": ""
 }
