@@ -1,5 +1,5 @@
 from tqdm import tqdm
-from utils.io import read_json, save_to_json, save_to_txt, convert_results
+from utils.io import read_json_or_dataset, save_to_json, save_to_txt, convert_results
 from fulltext_search.inference_bm25s import pipeline_bm25
 from semantic_search.inference_sbert import pipeline
 
@@ -44,8 +44,8 @@ def combine_bm25_embedding_results(bm25_results, embedding_results, ratio=(0.3, 
 def combined_pipeline(config, benchmark):
     bm25_results, _ = pipeline_bm25(config)
     
-    queries = read_json(config['query_path'])
-    corpus = read_json(config['corpus_path'])
+    queries = read_json_or_dataset(config['query_path'])
+    corpus = read_json_or_dataset(config['corpus_path'])
     model_name = config['model_name']
     embedding_results, _, detailed_embedding_results, _ = pipeline(
                                                             model_name=model_name,
@@ -114,9 +114,9 @@ def find_best_combination_ratio(benchmark, bm25_results, embedding_results, top_
 
 
 if __name__ == '__main__':
-    config = read_json('configs/hybrid_config.json')
+    config = read_json_or_dataset('configs/hybrid_config.json')
 
-    benchmark = read_json(config['benchmark'])
+    benchmark = read_json_or_dataset(config['benchmark'])
     bm25_results, embedding_results, combined_results = combined_pipeline(
         config=config,
         benchmark=None
