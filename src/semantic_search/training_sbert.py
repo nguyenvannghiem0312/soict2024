@@ -24,10 +24,10 @@ def load_config(config_path="configs/sbert.json"):
     config = read_json_or_dataset(config_path)
     return config
 
-def load_model(config):
+def load_model(model_name, max_length):
     """Load the SentenceTransformer model."""
-    model = SentenceTransformer(config["model"])
-    model.max_seq_length = config["max_length"]
+    model = SentenceTransformer(model_name)
+    model.max_seq_length = max_length
     logging.info(model)
     return model
 
@@ -47,6 +47,10 @@ def load_datasets(config):
         negative = [config["corpus_prompt"] + item["negative"] for item in train_datasets]
         datasets["negative"] = negative
     logging.info(f"Train dataset: {len(datasets['anchor'])}")
+    logging.info(f"Example dataset:")
+    logging.info(f"Anchor: {datasets['anchor'][0]}")
+    logging.info(f"Positive: {datasets['positive'][0]}")
+    logging.info(f"Negative: {datasets['negative'][0]}")
     return Dataset.from_dict(datasets)
 
 
@@ -132,10 +136,10 @@ def train_model(model, args, train_dataset, train_loss, dev_evaluator):
 
 
 def main(config):
-    model = load_model(config)
+    model = load_model(config["model"], max_length=config["max_length"])
     guide = None
     if config["guide_model"] != "":
-        guide = load_model(config["guide_model"])
+        guide = load_model(config["guide_model"], max_length=config["max_length"])
 
     train_dataset= load_datasets(config)
     train_loss = define_loss(model=model, config=config, guide=guide)
