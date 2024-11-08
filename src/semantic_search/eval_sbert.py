@@ -15,9 +15,10 @@ def load_config(config_path="configs/sbert.json"):
     config = read_json_or_dataset(config_path)
     return config
 
-def load_model(model_name):
+def load_model(config):
     """Load the SentenceTransformer model."""
-    model = SentenceTransformer(model_name)
+    model = SentenceTransformer(config["model"], trust_remote_code=True)
+    model.max_seq_length = config["max_length"]
     return model
 
 def load_evaluator(corpus_dev_path, query_dev_path):
@@ -36,7 +37,9 @@ def load_evaluator(corpus_dev_path, query_dev_path):
         accuracy_at_k=[10],
         precision_recall_at_k= [10],
         map_at_k= [10],
-        show_progress_bar=True
+        show_progress_bar=True,
+        query_prompt="Instruct: Cho tôi một văn bản liên quan đến câu hỏi này\nQuery:",
+        corpus_prompt="",
     )
     return dev_evaluator
 
@@ -59,7 +62,7 @@ if __name__ == "__main__":
 
     print("Config: ", json.dumps(config, indent=4, ensure_ascii=False))
 
-    model = load_model(config["model"])
+    model = load_model(config)
 
     dev_evaluator = load_evaluator(corpus_dev_path=config["corpus_dev_path"], 
                                    query_dev_path=config["query_dev_path"])

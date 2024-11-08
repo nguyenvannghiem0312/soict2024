@@ -11,8 +11,9 @@ from utils.model import load_model2vec
 import warnings
 warnings.filterwarnings("ignore")
 
-def load_model(model_name='Turbo-AI/me5-base-v3__trim-vocab'):
+def load_model(model_name='Turbo-AI/me5-base-v3__trim-vocab', max_length=512):
     model = SentenceTransformer(model_name)
+    model.max_seq_length = max_length
     return model
 
 def encode_corpus(model: SentenceTransformer, corpus, corpus_embedding_path='outputs/corpus_embeddings.pkl', is_tokenizer=True):
@@ -99,8 +100,8 @@ def calculate_mrr(results, benchmark):
 
     return mrr_total / len(results)
 
-def pipeline(model_name, corpus, query, benchmark, corpus_embedding_path='outputs/corpus_embeddings.pkl', top_k=10, is_tokenizer=True):
-    model = load_model(model_name)
+def pipeline(model_name, corpus, query, benchmark, corpus_embedding_path='outputs/corpus_embeddings.pkl', top_k=10, is_tokenizer=True, max_length=512):
+    model = load_model(model_name, max_length)
     
     # Check if corpus embeddings file exists
     try:
@@ -148,7 +149,8 @@ if __name__ == '__main__':
         benchmark=None,
         corpus_embedding_path=config['corpus_embedding_path'],
         top_k=config['top_k'],
-        is_tokenizer=config['is_tokenizer']
+        is_tokenizer=config['is_tokenizer'],
+        max_length=config["max_length"]
     )
 
     save_to_txt(data=results, file_path=config['output_predict_txt'])

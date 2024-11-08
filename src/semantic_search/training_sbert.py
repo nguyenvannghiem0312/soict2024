@@ -24,16 +24,17 @@ def load_config(config_path="configs/sbert.json"):
     config = read_json_or_dataset(config_path)
     return config
 
-def load_model(model_name):
+def load_model(config):
     """Load the SentenceTransformer model."""
-    model = SentenceTransformer(model_name)
+    model = SentenceTransformer(config["model"])
+    model.max_seq_length = config["max_length"]
     logging.info(model)
     return model
 
 
-def load_datasets(train_path):
+def load_datasets(config):
     """Load the NLI training and evaluation datasets."""
-    train_datasets = read_json_or_dataset(train_path)
+    train_datasets = read_json_or_dataset(config["train_path"])
     train_datasets = process_data(train=train_datasets)
     
     datasets = {}
@@ -42,10 +43,10 @@ def load_datasets(train_path):
 
     datasets["anchor"] = anchor
     datasets["positive"] = positive
-    if "negative" in train_datasets[0]:
+    if "negative" in train_datasets[0] and config["is_triplet"] == True:
         negative = [item["negative"] for item in train_datasets]
         datasets["negative"] = negative
-    
+    logging.info(f"Train dataset: {len(datasets["anchor"])}")
     return Dataset.from_dict(datasets)
 
 
@@ -53,6 +54,7 @@ def define_loss(model, config, guide=None):
     """Define the Loss."""
     loss_type = config["loss"]
 
+    logging.info(f"Loss: {loss_type}")
     if loss_type == "MultipleNegativesRankingLoss":
         return losses.MultipleNegativesRankingLoss(model)
 
@@ -130,12 +132,12 @@ def train_model(model, args, train_dataset, train_loss, dev_evaluator):
 
 
 def main(config):
-    model = load_model(config["model"])
+    model = load_model(config)
     guide = None
     if config["guide_model"] != "":
         guide = load_model(config["guide_model"])
 
-    train_dataset= load_datasets(train_path=config["train_path"])
+    train_dataset= load_datasets(config)
     train_loss = define_loss(model=model, config=config, guide=guide)
     dev_evaluator = load_evaluator(corpus_dev_path=config["corpus_dev_path"], 
                                    query_dev_path=config["query_dev_path"])
