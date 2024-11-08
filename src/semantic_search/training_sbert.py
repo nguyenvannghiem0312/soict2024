@@ -46,7 +46,7 @@ def load_datasets(config):
     if "negative" in train_datasets[0] and config["is_triplet"] == True:
         negative = [config["corpus_prompt"] + item["negative"] for item in train_datasets]
         datasets["negative"] = negative
-    logging.info(f"Train dataset: {len(datasets["anchor"])}")
+    logging.info(f"Train dataset: {len(datasets['anchor'])}")
     return Dataset.from_dict(datasets)
 
 
