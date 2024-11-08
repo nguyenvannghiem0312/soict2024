@@ -21,12 +21,12 @@ def load_model(config):
     model.max_seq_length = config["max_length"]
     return model
 
-def load_evaluator(corpus_dev_path, query_dev_path):
+def load_evaluator(config):
     """Load the benchmark dataset and create an evaluator."""
-    corpus_dev = read_json_or_dataset(corpus_dev_path)
-    query_dev = read_json_or_dataset(query_dev_path)
+    corpus_dev = read_json_or_dataset(config["corpus_dev_path"])
+    query_dev = read_json_or_dataset(config["query_dev_path"])
 
-    dev_datasets = process_dev(corpus=corpus_dev, query=query_dev)
+    dev_datasets = process_dev(corpus=corpus_dev, query=query_dev, query_prompt=config["query_prompt"], corpus_prompt=config["corpus_prompt"])
     dev_evaluator = InformationRetrievalEvaluator(
         queries=dev_datasets['queries'],
         corpus=dev_datasets['corpus'],
@@ -38,8 +38,6 @@ def load_evaluator(corpus_dev_path, query_dev_path):
         precision_recall_at_k= [10],
         map_at_k= [10],
         show_progress_bar=True,
-        query_prompt="Instruct: Cho tôi một văn bản liên quan đến câu hỏi này\nQuery:",
-        corpus_prompt="",
     )
     return dev_evaluator
 
@@ -64,8 +62,7 @@ if __name__ == "__main__":
 
     model = load_model(config)
 
-    dev_evaluator = load_evaluator(corpus_dev_path=config["corpus_dev_path"], 
-                                   query_dev_path=config["query_dev_path"])
+    dev_evaluator = load_evaluator(config)
     
     result = eval_model(model, dev_evaluator)
     print("Result: ", json.dumps(result, indent=4, ensure_ascii=False))

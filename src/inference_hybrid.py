@@ -55,7 +55,9 @@ def combined_pipeline(config, benchmark):
                                                             corpus_embedding_path=config["corpus_embedding_path"],
                                                             top_k=config['top_k'],
                                                             is_tokenizer=config['is_tokenizer'],
-                                                            max_length=config["max_length"]
+                                                            max_length=config["max_length"],
+                                                            query_prompt=config["query_prompt"],
+                                                            corpus_prompt=config["corpus_prompt"],
                                                         )
     
     combined_results = combine_bm25_embedding_results(

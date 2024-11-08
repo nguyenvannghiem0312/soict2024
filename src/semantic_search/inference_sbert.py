@@ -16,11 +16,11 @@ def load_model(model_name='Turbo-AI/me5-base-v3__trim-vocab', max_length=512):
     model.max_seq_length = max_length
     return model
 
-def encode_corpus(model: SentenceTransformer, corpus, corpus_embedding_path='outputs/corpus_embeddings.pkl', is_tokenizer=True):
+def encode_corpus(model: SentenceTransformer, corpus, corpus_embedding_path='outputs/corpus_embeddings.pkl', is_tokenizer=True, corpus_prompt=""):
     if is_tokenizer == True:
-        corpus_texts = [tokenize(entry['text']) for entry in tqdm(corpus)]
+        corpus_texts = [tokenize(corpus_prompt + entry['text']) for entry in tqdm(corpus)]
     else:
-        corpus_texts = [entry['text'] for entry in corpus]
+        corpus_texts = [corpus_prompt + entry['text'] for entry in corpus]
     corpus_embeddings = model.encode(corpus_texts, convert_to_tensor=True, show_progress_bar=True, batch_size=32)
     corpus_embeddings = corpus_embeddings.cpu()
     with open(corpus_embedding_path, 'wb') as f:
@@ -33,11 +33,11 @@ def load_corpus(corpus_embedding_path='corpus_embeddings.pkl'):
     print(f'Corpus embeddings loaded from {corpus_embedding_path}')
     return corpus, corpus_embeddings
 
-def retrieve(model, corpus, corpus_embeddings, query, top_k=10, batch_size=32, is_tokenizer=True):
+def retrieve(model, corpus, corpus_embeddings, query, top_k=10, batch_size=32, is_tokenizer=True, query_prompt=""):
     if is_tokenizer:
-        query_texts = [tokenize(entry['text']) for entry in query]
+        query_texts = [tokenize(query_prompt + entry['text']) for entry in query]
     else:
-        query_texts = [entry['text'] for entry in query]
+        query_texts = [query_prompt + entry['text'] for entry in query]
 
     # Encode query texts in batches
     query_embeddings = model.encode(query_texts, convert_to_tensor=True, batch_size=batch_size)
@@ -100,18 +100,18 @@ def calculate_mrr(results, benchmark):
 
     return mrr_total / len(results)
 
-def pipeline(model_name, corpus, query, benchmark, corpus_embedding_path='outputs/corpus_embeddings.pkl', top_k=10, is_tokenizer=True, max_length=512):
+def pipeline(model_name, corpus, query, benchmark, corpus_embedding_path='outputs/corpus_embeddings.pkl', top_k=10, is_tokenizer=True, max_length=512, query_prompt="", corpus_prompt=""):
     model = load_model(model_name, max_length)
     
     # Check if corpus embeddings file exists
     try:
         corpus, corpus_embeddings = load_corpus(corpus_embedding_path)
     except FileNotFoundError:
-        encode_corpus(model, corpus, corpus_embedding_path, is_tokenizer=is_tokenizer)
+        encode_corpus(model, corpus, corpus_embedding_path, is_tokenizer=is_tokenizer, corpus_prompt=corpus_prompt)
         corpus, corpus_embeddings = load_corpus(corpus_embedding_path)
     
     # Retrieve results
-    results, results_json, detailed_results = retrieve(model, corpus, corpus_embeddings, query, top_k=top_k, is_tokenizer=is_tokenizer)
+    results, results_json, detailed_results = retrieve(model, corpus, corpus_embeddings, query, top_k=top_k, is_tokenizer=is_tokenizer, query_prompt=query_prompt)
 
     # Calculate MRR
     if benchmark:
