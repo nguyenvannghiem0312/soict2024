@@ -74,7 +74,7 @@ def calculate_mrr(benchmark, combined_results, top_k=10):
         query_id = query['id']
         relevant_ids = {doc['id'] for doc in query['relevant']}
 
-        combined_query_result = combined_results.get(query_id, {})
+        combined_query_result = next((item for item in combined_results if item['id'] == query_id), None)
         ranked_docs = combined_query_result.get('relevant', [])[:top_k]
 
         rr = 0.0
