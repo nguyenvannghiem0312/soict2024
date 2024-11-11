@@ -43,7 +43,7 @@ def search_by_id(data, search_id):
     return None
 
 
-def process_data(train):
+def process_data(train, number_negatives=3):
     output = []
     for item in train:
         query_text = item['text']
@@ -54,13 +54,11 @@ def process_data(train):
                 "positive": relevant_context['text']
             }
             
-            if 'not_relevant' in item:
-                for irrelevant_context in item['not_relevant']:
-                    negative_entry = entry.copy()
-                    negative_entry["negative"] = irrelevant_context['text']
-                    output.append(negative_entry)
-            else:
-                output.append(entry)
+            if 'not_relevant' in item and len(item['not_relevant']) >= number_negatives:
+                negative_entry = entry.copy()
+                for idx, irrelevant_context in enumerate(item['not_relevant'][:number_negatives]):
+                    negative_entry[f"negative_{idx}"] = irrelevant_context['text']
+                output.append(negative_entry)
     
     return output
 

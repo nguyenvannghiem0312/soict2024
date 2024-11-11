@@ -35,23 +35,31 @@ def load_model(model_name, max_length):
 def load_datasets(config):
     """Load the NLI training and evaluation datasets."""
     train_datasets = read_json_or_dataset(config["train_path"])
-    train_datasets = process_data(train=train_datasets)
+    train_datasets = process_data(train=train_datasets, number_negatives=config['number_negatives'])
     
-    datasets = {}
-    anchor = [config["query_prompt"] + item["anchor"] for item in train_datasets]
-    positive = [config["corpus_prompt"] + item["positive"] for item in train_datasets]
+    # datasets = {}
+    # anchor = [config["query_prompt"] + item["anchor"] for item in train_datasets]
+    # positive = [config["corpus_prompt"] + item["positive"] for item in train_datasets]
 
-    datasets["anchor"] = anchor
-    datasets["positive"] = positive
-    if "negative" in train_datasets[0] and config["is_triplet"] == True:
-        negative = [config["corpus_prompt"] + item["negative"] for item in train_datasets]
-        datasets["negative"] = negative
-    logging.info(f"Train dataset: {len(datasets['anchor'])}")
-    logging.info(f"Example dataset:")
-    logging.info(f"Anchor: {datasets['anchor'][0]}")
-    logging.info(f"Positive: {datasets['positive'][0]}")
-    logging.info(f"Negative: {datasets['negative'][0]}")
-    return Dataset.from_dict(datasets)
+    # datasets["anchor"] = anchor
+    # datasets["positive"] = positive
+    # if "negative" in train_datasets[0] and config["is_triplet"] == True:
+    #     negative = [config["corpus_prompt"] + item["negative"] for item in train_datasets]
+    #     datasets["negative"] = negative
+    datasets = []
+    for item in train_datasets:
+        sample = {
+            'anchor': config["query_prompt"] + item["anchor"],
+            'positive': config["corpus_prompt"] + item["positive"]
+        }
+        if config["is_triplet"] == True:
+            for idx in range(config['number_negatives']):
+                sample[f'negative_{idx}'] = config["corpus_prompt"] + item[f'negative_{idx}']
+
+        datasets.append(sample)
+    datasets = Dataset.from_list(datasets)
+    logging.info(datasets)
+    return datasets
 
 
 def define_loss(model, config, guide=None):
