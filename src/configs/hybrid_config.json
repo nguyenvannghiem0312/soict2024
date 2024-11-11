@@ -1,10 +1,10 @@
 {
     "stopwords_path": "stopwords.csv",
-    "corpus_path": "data/Legal Document Retrieval/corpus.json",
-    "query_path": "data/Legal Document Retrieval/public_test.json",
+    "corpus_path": "Turbo-AI/data-corpus",
+    "query_path": "data/public_test.json",
     "benchmark": "data/Dev/query_dev.json",
-    "model_name": "outputs/bge-m3-v0/checkpoint-4850",
-    "corpus_embedding_path": "outputs/corpus_embeddings_bge.pkl",
+    "model_name": "outputs/me5-base-v5/checkpoint-3300",
+    "corpus_embedding_path": "outputs/corpus_embeddings_e5.pkl",
     "max_length": 512,
     "create_index": false,
     "hub_id": "Turbo-AI/corpus-index",
@@ -12,6 +12,8 @@
     "output_top_k": 10,
     "is_tokenizer": false,
     "is_test": true,
+    "query_prompt": "query: ",
+    "corpus_prompt": "passage: ",
     "bm25_weight": 0.15,
     "emb_weight": 0.85
 }
