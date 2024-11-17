@@ -54,11 +54,13 @@ def process_data(train, number_negatives=3):
                 "positive": relevant_context['text']
             }
             
-            if 'not_relevant' in item and len(item['not_relevant']) >= number_negatives:
+            if 'not_relevant' in item and len(item['not_relevant']) >= number_negatives and number_negatives != 0:
                 negative_entry = entry.copy()
                 for idx, irrelevant_context in enumerate(item['not_relevant'][:number_negatives]):
                     negative_entry[f"negative_{idx}"] = irrelevant_context['text']
                 output.append(negative_entry)
+            if number_negatives == 0:
+                output.append(entry)
     
     return output
 
