@@ -22,8 +22,12 @@ def generate_output(model, tokenizer, contexts, config, device):
             num_return_sequences=config["num_return_sequences"]
         )
     batch_size = len(contexts)
-    return [[tokenizer.decode(output, skip_special_tokens=True) for output in sampling_outputs[i::batch_size]]
-            for i in range(batch_size)]
+    generated_texts = [
+        [tokenizer.decode(output, skip_special_tokens=True) for output in sampling_outputs[i * config["num_return_sequences"]:(i + 1) * config["num_return_sequences"]]]
+        for i in range(batch_size)
+    ]
+
+    return generated_texts
 
 def main(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
