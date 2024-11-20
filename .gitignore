@@ -5,6 +5,7 @@ outputs
 *.json
 *.txt
 *.pkl
+*.env
 dummy.py
 wandb
 src/data

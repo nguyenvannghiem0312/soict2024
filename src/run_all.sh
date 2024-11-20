@@ -1,56 +1,33 @@
-# Soict-2024
+#!/bin/bash
 
-```bash
-docker build -t turbo-legal .
-docker run --rm -it --gpus all --net host -e HF_TOKEN=hf_TrnoiOxxxxxxxxxxScyesMoJJ turbo-legal /bin/bash
-```
+cd /workspace/src
+
+# Preprocess data
 
 
-```
-cd src
-```
-
-run bm25
-```
+# Run BM25 inference
 python fulltext_search/inference_bm25.py --config_path "configs/bm25_config.json"
-```
 
-run bm25s
-```
+# Run BM25s inference
 python fulltext_search/inference_bm25s.py --config_path "configs/bm25s_config.json"
-```
 
-run training sbert
-```
+# Train SBERT model
 python semantic_search/training_sbert.py --config_path "configs/sbert.json"
-```
 
-run inference sbert
-```
+# Run SBERT inference
 python semantic_search/inference_sbert.py --config_path "configs/infer_sbert.json"
-```
 
-run eval sbert in dev dataset
-```
+# Evaluate SBERT on the development dataset
 python semantic_search/eval_sbert.py --config_path "configs/sbert.json"
-```
 
-run training cross
-```
+# Train Cross Encoder model
 python cross_encoder/training_cross.py --config_path "configs/cross.json"
-```
 
-run inference cross
-```
+# Run Cross Encoder inference
 python cross_encoder/inference_cross.py --config_path "configs/infer_cross.json"
-```
 
-run training doc2query
-```
+# Train Doc2Query model
 python doc2query/training_doc2query.py --config_path "configs/doc2query_config.json"
-```
 
-run inference doc2query
-```
+# Run Doc2Query inference
 python doc2query/inference_doc2query.py --config_path "configs/infer_doc2query.json"
-```
