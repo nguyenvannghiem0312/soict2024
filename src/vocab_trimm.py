@@ -27,12 +27,12 @@ def trim_vocab_model(config):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run BM25 pipeline with configuration.")
     parser.add_argument(
-        "--config_path", 
-        type=str, 
-        default="src/configs/trimm_vocab_config.json", 
+        "--config_path",
+        type=str,
+        default="src/configs/trimm_vocab_config.json",
         help="Path to the configuration JSON file."
     )
-    
+
     args = parser.parse_args()
     config = read_json_or_dataset(args.config_path)
     trim_vocab_model(config)

@@ -1,5 +1,5 @@
 {
-    "model": "outputs/me5-base-v5/checkpoint-3300",
+    "model": "Turbo-AI/multilingual-e5-base__trim_vocab-1024",
     "guide_model": "",
     "max_length": 512,
     "query_prompt": "query: ",
@@ -8,8 +8,8 @@
     "number_negatives": 3,
     "loss": "CachedMultipleNegativesRankingLoss",
     "train_path": "Turbo-AI/train-multi-negatives",
-    "corpus_dev_path": "data/Dev/corpus_dev.json",
-    "query_dev_path": "data/Dev/query_dev.json",
+    "corpus_dev_path": "Turbo-AI/data-corpus_dev",
+    "query_dev_path": "Turbo-AI/data-query_dev",
     "output_dir": "outputs/me5-base-v5",
     "batch_size": 128,
     "mini_batch_size": 16,

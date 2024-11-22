@@ -12,6 +12,8 @@ WORKDIR /workspace/src
 
 ENV PYTHONPATH=/workspace/src
 
-#RUN chmod +x /workspace/src/run_all.sh
+RUN chmod +x /workspace/src/run_all.sh
 
-#CMD ["bash", "./run_all.sh"]
+RUN chmod +x /workspace/src/run.sh
+
+CMD ["bash", "./run.sh"]
