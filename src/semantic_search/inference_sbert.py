@@ -12,7 +12,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def load_model(model_name='Turbo-AI/me5-base-v3__trim-vocab', max_length=512):
-    model = SentenceTransformer(model_name)
+    model = SentenceTransformer(model_name, device="cuda")
     model.max_seq_length = max_length
     return model
 
