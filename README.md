@@ -1,10 +1,16 @@
 # Soict-2024
 
+## Quick start
+
 ```bash
+# Build image and run the last model for public test
 docker build -t turbo-legal .
-docker run --rm -it --gpus all --net host -e HF_TOKEN=hf_TrnoiOxxxxxxxxxxScyesMoJJ turbo-legal /bin/bash
+# For run full pipeline from begin
+docker run --rm -it --gpus all --net host turbo-legal /bin/bash
+./run_all.sh
 ```
 
+## For run individual
 
 ```
 cd src
