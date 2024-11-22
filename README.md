@@ -5,23 +5,25 @@
 ```bash
 # Build image and run the last model for public test
 docker build -t turbo-legal .
-# For run full pipeline from begin
+# For interactive run full pipeline from begin
 docker run --rm -it --gpus all --net host turbo-legal /bin/bash
 ./run_all.sh
 ```
 
 ## For run individual
-
+First, go into `src` folder
 ```
 cd src
 ```
 
-run bm25
+Then change the config and run:
+
+  - run bm25
 ```
 python fulltext_search/inference_bm25.py --config_path "configs/bm25_config.json"
 ```
 
-run bm25s
+  - run bm25s
 ```
 python fulltext_search/inference_bm25s.py --config_path "configs/bm25s_config.json"
 ```

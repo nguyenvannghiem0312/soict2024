@@ -6,9 +6,9 @@
     "output_predict_json": "outputs/predict.json",
     "output_detailed_predict_json": "outputs/detailed_predict.json",
     "model_name": "Turbo-AI/me5-base-v3__trim-vocab",
-    "top_k": 5,
-    "max_length": 512,
+    "top_k": 10,
+    "max_length": 1024,
     "is_tokenizer": false,
-    "query_prompt": "",
-    "corpus_prompt": ""
+    "query_prompt": "query: ",
+    "corpus_prompt": "corpus: "
 }
