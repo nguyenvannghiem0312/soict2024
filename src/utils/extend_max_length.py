@@ -1,5 +1,7 @@
 from transformers import AutoConfig, AutoModel, AutoTokenizer, XLMRobertaModel
 import torch.nn as nn
+from utils.io import read_json_or_dataset, save_to_json
+import argparse
 
 def modify_model_and_push_to_hub(model_name: str, new_max_position_embeddings: int, hub_name: str):
     # Load model and tokenizer
@@ -28,13 +30,14 @@ def modify_model_and_push_to_hub(model_name: str, new_max_position_embeddings: i
     model.push_to_hub(hub_name, private=True)
     tokenizer.push_to_hub(hub_name, private=True)
 
-def main():
-    model_name = 'Turbo-AI/multilingual-e5-large-instruct__trim_vocab'
-    new_max_position_embeddings = 1024
-    hub_name = 'Turbo-AI/multilingual-e5-large-instruct__trim_vocab-1024'
+def main(config):
+    model_name = config["model"]
+    new_max_position_embeddings = config["targe_max_length"]
+    hub_name = config["hub_name"]
     
     # Call the function to modify and push the model
     modify_model_and_push_to_hub(model_name, new_max_position_embeddings, hub_name)
 
 if __name__ == "__main__":
-    main()
+    config = read_json_or_dataset('configs/extend_max_length_config.json')
+    main(config)

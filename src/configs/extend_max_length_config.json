@@ -1,0 +1,5 @@
+{
+    "model": "Turbo-AI/multilingual-e5-large-instruct__trim_vocab",
+    "targe_max_length": 1024,
+    "hub_name": "Turbo-AI/multilingual-e5-large-instruct__trim_vocab-1024"
+}
