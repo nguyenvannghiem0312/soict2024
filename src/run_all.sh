@@ -35,6 +35,7 @@ python semantic_search/training_sbert.py --config_path "configs/sbert.json"
 echo ">>> Generate samples use e5 base trim vocab v2"
 sed -i 's|Turbo-AI/multilingual-e5-base-trimm-vocab-1024-v3|Turbo-AI/multilingual-e5-base-trimm-vocab-1024-v2|g' configs/infer_sbert.json
 sed -i 's|Turbo-AI/me5-base-v3__trim-vocab|Turbo-AI/multilingual-e5-base-trimm-vocab-1024-v2|g' configs/infer_sbert.json
+sed -i 's|Turbo-AI/data-public_test|Turbo-AI/data-train|g' configs/infer_sbert.json
 sed -i 's|"top_k": 10|"top_k": 5|g' configs/infer_sbert.json
 python semantic_search/inference_sbert.py --config_path "configs/infer_sbert.json"
 
