@@ -38,7 +38,7 @@ def pipeline(model_name, corpus, predicts, output_k=10, max_length=512):
         return (scores[0] - scores[1] >= threshold and 
                 (scores[0] - scores[1]) / (scores[1] - scores[2] + 0.00001) >= ratio)
 
-    def write_output(fo, predict_id, relevant, scores, enable_filter=False):
+    def write_output(fo, predict_id, relevant, scores, enable_filter=False, outputs=None):
         sorted_results = sorted(zip(scores, relevant), key=lambda x: -x[0])[:output_k]
         if enable_filter and threshold_filter(scores, embed_threshold, embed_threshold_ratio):
             sorted_results = list(zip(scores[:output_k], relevant[:output_k]))
@@ -48,9 +48,10 @@ def pipeline(model_name, corpus, predicts, output_k=10, max_length=512):
             'id': predict_id,
             'text': public_test[predict_id],
             'relevant': [x[1] for x in sorted_results],
+            'score': [float(x[0]) for x in sorted_results],
         })
 
-    def process_batch(model, fo, batch, enable_filter=False):
+    def process_batch(model, fo, batch, enable_filter=False, outputs=None):
         scores = model.predict(list(zip(batch['queries'], batch['relevant_contexts'])), batch_size=batch_size)
         assert len(scores) == len(batch['queries'])
         
@@ -58,7 +59,7 @@ def pipeline(model_name, corpus, predicts, output_k=10, max_length=512):
             predict_id = batch['predict_ids'][i * topk]
             relevant = batch['relevant_ids'][i * topk:(i + 1) * topk]
             score_slice = scores[i * topk:(i + 1) * topk]
-            write_output(fo, predict_id, relevant, score_slice, enable_filter=enable_filter)
+            write_output(fo, predict_id, relevant, score_slice, enable_filter=enable_filter, outputs=outputs)
 
     # Initialization
     outputs = []
@@ -89,17 +90,17 @@ def pipeline(model_name, corpus, predicts, output_k=10, max_length=512):
                 batch['relevant_ids'].extend(predict['relevant'])
                 batch['relevant_scores'].extend(predict['score'])
             else:
-                write_output(fo, predict['id'], predict['relevant'][:output_k], predict['score'], enable_filter=True)
+                write_output(fo, predict['id'], predict['relevant'][:output_k], predict['score'], enable_filter=False, outputs=outputs)
                 continue
 
             # Process full batch
             if len(batch['queries']) >= batch_size * len(relevant_contexts):
-                process_batch(model, fo, batch)
+                process_batch(model, fo, batch, outputs=outputs)
                 batch = initialize_batch()  # Clear the batch
 
         # Process any remaining queries
         if batch['queries']:
-            process_batch(model, fo, batch, enable_filter=True)
+            process_batch(model, fo, batch, enable_filter=True, outputs=outputs)
         
         print(all, number)
     save_to_json(outputs, config['output_reranked_json'], indent=4)
