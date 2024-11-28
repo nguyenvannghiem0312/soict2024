@@ -197,6 +197,7 @@ class CrossEncoder(PushToHubMixin):
         use_amp: bool = False,
         callback: Callable[[float, int, int], None] = None,
         show_progress_bar: bool = True,
+        gradient_accumulation_steps: int = 1,
     ) -> None:
         """
         Train the model with the given training objective
@@ -268,8 +269,8 @@ class CrossEncoder(PushToHubMixin):
             self.model.zero_grad()
             self.model.train()
 
-            for features, labels in tqdm(
-                train_dataloader, desc="Iteration", smoothing=0.05, disable=not show_progress_bar
+            for step, (features, labels) in enumerate(
+            tqdm(train_dataloader, desc="Iteration", smoothing=0.05, disable=not show_progress_bar)
             ):
                 if use_amp:
                     with torch.autocast(device_type=self._target_device.type):
@@ -280,24 +281,28 @@ class CrossEncoder(PushToHubMixin):
                         loss_value = loss_fct(logits, labels)
 
                     scale_before_step = scaler.get_scale()
-                    scaler.scale(loss_value).backward()
-                    scaler.unscale_(optimizer)
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
-                    scaler.step(optimizer)
-                    scaler.update()
+                    scaler.scale(loss_value / gradient_accumulation_steps).backward()
 
-                    skip_scheduler = scaler.get_scale() != scale_before_step
+                    if (step + 1) % gradient_accumulation_steps == 0 or (step + 1) == len(train_dataloader):
+                        scaler.unscale_(optimizer)
+                        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
+                        scaler.step(optimizer)
+                        scaler.update()
+
+                        skip_scheduler = scaler.get_scale() != scale_before_step
+                        optimizer.zero_grad()
                 else:
                     model_predictions = self.model(**features, return_dict=True)
                     logits = activation_fct(model_predictions.logits)
                     if self.config.num_labels == 1:
                         logits = logits.view(-1)
                     loss_value = loss_fct(logits, labels)
-                    loss_value.backward()
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
-                    optimizer.step()
+                    (loss_value / gradient_accumulation_steps).backward()
 
-                optimizer.zero_grad()
+                    if (step + 1) % gradient_accumulation_steps == 0 or (step + 1) == len(train_dataloader):
+                        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
+                        optimizer.step()
+                        optimizer.zero_grad()
 
                 if not skip_scheduler:
                     scheduler.step()
