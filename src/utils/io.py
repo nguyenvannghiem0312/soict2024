@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 from typing import Any
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 import jsonlines
 
 
@@ -40,6 +40,14 @@ def save_to_json(data: Any, file_path: str, indent: int = 2) -> None:
 
     # print(f"Save data successfully to path: {file_path}")
 
+def save_data_to_hub(data: Any, repo_id: str) -> None:
+    """
+    Saves data to huggingface
+    """
+    data = Dataset.from_list(data)
+    data.push_to_hub(repo_id, private=True)
+
+    print(f"Save data successfully to path: {repo_id}")
 
 def save_to_jsonl(data: Any, file_path: str) -> None:
     """
