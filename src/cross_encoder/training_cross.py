@@ -22,6 +22,28 @@ logger = logging.getLogger(__name__)
 # Load your custom training data
 logger.info("Loading custom training data")
 
+def load_data(config):
+    filepath = config['train_path']
+
+    train_samples = []
+    label_count = {0: 0, 1: 0}
+
+    data = read_json_or_dataset(filepath)
+
+    for item in tqdm(data):
+        train_samples.append(InputExample(texts=[item['query'], item['context']], label=item['label']))
+        label_count[item['label']] += 1
+    # Log thống kê dữ liệu
+    total_samples = len(train_samples)
+    ratio_1_to_0 = label_count[1] / label_count[0] if label_count[0] > 0 else float('inf')
+
+    print(f"Total samples: {total_samples}")
+    print(f"Label 1 count: {label_count[1]} ({label_count[1] / total_samples * 100:.2f}%)")
+    print(f"Label 0 count: {label_count[0]} ({label_count[0] / total_samples * 100:.2f}%)")
+    print(f"Ratio (1:0): {ratio_1_to_0:.2f}")
+
+    return train_samples
+
 def load_custom_data(config):
     filepath = config['train_path']
     corpus_dev = read_json_or_dataset(config["corpus_dev_path"])
@@ -146,7 +168,10 @@ def train(config):
         print(mrr_scores)
         return None
     
-    train_samples = load_custom_data(config)
+    if config["custom_data"] == True:
+        train_samples = load_custom_data(config)
+    else:
+        train_samples = load_data(config)
     # save_data_to_hub(train_samples, repo_id='Turbo-AI/data-cross')
     train_batch_size = config['batch_size']
     num_epochs = config['num_train_epochs']
@@ -165,6 +190,7 @@ def train(config):
         warmup_steps=warmup_steps,
         output_path=model_save_path,
         use_amp=False,
+        gradient_accumulation_steps=config['gradient_accumulation_steps'],
         save_best_model=config['load_best_model_at_end'],
     )
 
