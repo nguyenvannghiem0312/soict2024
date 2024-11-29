@@ -26,7 +26,7 @@ def load_config(config_path="configs/sbert.json"):
 
 def load_model(model_name, max_length):
     """Load the SentenceTransformer model."""
-    model = SentenceTransformer(model_name)
+    model = SentenceTransformer(model_name, trust_remote_code=True)
     model.max_seq_length = max_length
     logging.info(model)
     return model

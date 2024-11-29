@@ -130,8 +130,7 @@ class VocabTrimmer:
                 self.__model_class = XLMRobertaModel
             else:
                 raise ValueError(f"model type {self.config.architectures} is not supported.")
-
-        self.model = self.__model_class.from_pretrained(model_name, config=self.config)
+        self.model = self.__model_class.from_pretrained(model_name, trust_remote_code=True)
         self.param_size_full_raw, self.param_size_embedding_raw, self.vocab_size_raw = self.show_parameter(log=True)
         self.param_size_full_trimmed, self.param_size_embedding_trimmed, self.vocab_size_trimmed = None, None, None
 
