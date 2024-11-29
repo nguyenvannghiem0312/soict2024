@@ -110,6 +110,7 @@ class CrossEncoder(PushToHubMixin):
             cache_dir=cache_dir,
             **automodel_args,
         )
+        print(self.model)
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_name,
             revision=revision,

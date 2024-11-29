@@ -152,7 +152,12 @@ def load_eval(config, threshold=1, ratio=99):
 def train(config):
     model_save_path = config['output_dir'] + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-    model = CrossEncoder(config['model'], trust_remote_code=True, num_labels=1, max_length=1024)
+    model = CrossEncoder(config['model'],
+                         trust_remote_code=True,
+                         num_labels=1,
+                         max_length=config['max_length'],
+                         classifier_dropout=config['classifier_dropout']
+                         )
     
     dev_samples, no_rerank_mrr, len_samples = load_eval(config=config)
     logger.info(f"DEV: {len(dev_samples)}")
