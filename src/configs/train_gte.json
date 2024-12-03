@@ -1,19 +1,19 @@
 {
-    "model": "Turbo-AI/gte-multilingual-base__trim_vocab",
+    "model": "Turbo-AI/gte-base-v0__trim_vocab-1024",
     "guide_model": "",
     "max_length": 1024,
     "query_prompt": "",
     "corpus_prompt": "",
-    "is_triplet": false,
-    "number_negatives": 0,
+    "is_triplet": true,
+    "number_negatives": 3,
     "loss": "CachedMultipleNegativesRankingLoss",
-    "train_path": "Turbo-AI/data-doc2query-generate",
+    "train_path": "Turbo-AI/train-multi-negatives-v3",
     "corpus_dev_path": "Turbo-AI/data-corpus_dev",
     "query_dev_path": "Turbo-AI/data-query_dev",
-    "output_dir": "outputs/gte-base-v0",
-    "batch_size": 4096,
+    "output_dir": "outputs/gte-base-v1",
+    "batch_size": 128,
     "mini_batch_size": 16,
-    "num_train_epochs": 5,
+    "num_train_epochs": 10,
     "warmup_ratio": 0.05,
     "fp16": false,
     "bf16": true,
@@ -27,5 +27,5 @@
     "load_best_model_at_end": true,
     "metric_for_best_model": "eval_cosine_mrr@10",
     "learning_rate": 5e-5,
-    "run_name": "gte-v0"
+    "run_name": "gte-v1"
 }

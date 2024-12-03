@@ -1,7 +1,7 @@
 {
     "stopwords_path": "stopwords.csv",
     "corpus_path": "Turbo-AI/data-corpus",
-    "train_path": "Turbo-AI/doc2query-generate-v2",
+    "train_path": "Turbo-AI/doc2query-generate",
     "query_path": "Turbo-AI/data-public_test",
     "result_path": "outputs/bm25_result.json",
     "generate_path": "outputs/bm25_generate.json",

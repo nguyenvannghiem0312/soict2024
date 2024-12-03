@@ -1,13 +1,13 @@
 {
-    "corpus_path": "data/Legal Document Retrieval/corpus.json",
-    "query_path": "data/Legal Document Retrieval/public_test.json",
-    "output_predict_txt": "outputs/predict.txt",
-    "output_predict_json": "outputs/predict.json",
-    "output_detailed_predict_json": "outputs/detailed_predict.json",
+    "corpus_path": "Turbo-AI/data-corpus",
+    "query_path": "Turbo-AI/private-test",
+    "output_predict_txt": "outputs/predict_ranker.txt",
+    "output_predict_json": "outputs/predict_ranker.json",
+    "output_detailed_predict_json": "outputs/detailed_predict_gte.json",
     "output_reranked_json": "outputs/predict_reranked.json",
-    "model_name": "Alibaba-NLP/gte-multilingual-reranker-base",
-    "top_k": 10,
+    "model_name": "Turbo-AI/jina-reranker-v0-base-multilingual__trimm_vocab",
+    "top_k": 50,
     "batch_size": 64,
-    "embed_threshold": 0.02,
-    "embed_threshold_ratio": 2
+    "embed_threshold": 0.99,
+    "embed_threshold_ratio": 0
 }

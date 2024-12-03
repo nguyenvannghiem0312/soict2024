@@ -20,6 +20,11 @@ cd src
 
 Then change the model name, batch size, top k, epoch,... in config files (for more detail read the report) and run:
 
+  - run trimm vocab
+```
+python vocab_trimm.py --config_path "configs/trimm_vocab_config.json"
+```
+
   - run bm25
 ```
 python fulltext_search/inference_bm25.py --config_path "configs/bm25_config.json"
@@ -53,6 +58,11 @@ python cross_encoder/training_cross.py --config_path "configs/cross.json"
   - run inference cross
 ```
 python cross_encoder/inference_cross.py --config_path "configs/infer_cross.json"
+```
+
+  - run inference combine score
+```
+python inferance_combine.py
 ```
 
   - run training doc2query

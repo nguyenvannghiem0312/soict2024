@@ -1,7 +1,10 @@
 cd /workspace/src
 
-echo ">>> Infer e5 base trim vocab v3 on public test"
-sed -i 's|Turbo-AI/me5-base-v3__trim-vocab|Turbo-AI/multilingual-e5-base-trimm-vocab-1024-v2|g' configs/infer_sbert.json
-sed -i 's|Turbo-AI/multilingual-e5-base-trimm-vocab-1024-v2|Turbo-AI/multilingual-e5-base-trimm-vocab-1024-v3|g' configs/infer_sbert.json
-sed -i 's|Turbo-AI/data-train|Turbo-AI/data-public_test|g' configs/infer_sbert.json
+echo ">>> Infer gte base trim vocab v1 on private test"
 python semantic_search/inference_sbert.py --config_path "configs/infer_sbert.json"
+
+echo ">>> Infer jina reranker on private test"
+python cross_encoder/inference_cross.py --config_path "configs/infer_cross.json"
+
+echo ">>> Combine score gte and jina on private test"
+python python inferance_combine.py

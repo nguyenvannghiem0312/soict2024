@@ -100,25 +100,18 @@ def load_custom_data(config):
     print(f"Ratio (1:0): {ratio_1_to_0:.2f}")
 
     return train_samples
-
-
-def threshold_filter(scores, threshold, ratio):
-    return (scores[0] - scores[1] >= threshold and 
-            (scores[0] - scores[1]) / (scores[1] - scores[2] + 0.00001) >= ratio)
     
-def load_eval(config, threshold=1, ratio=99):
+def load_eval(config):
     corpus_dev = read_json_or_dataset(config["corpus_dev_path"])
     query_dev = read_json_or_dataset(config["query_dev_path"])
     cross_dev = read_json_or_dataset(config["cross_dev_path"])
 
     dev_samples = []
-    no_rerank_mrr = []  # no reranking
 
     for item in cross_dev:
         try:
             query = search_by_id(data=query_dev, search_id=item['id'])['text']
             relevants = search_by_id(data=query_dev, search_id=item['id'])['relevant']
-            scores = item['score']
 
             positive = [rel['text'] for rel in relevants]
             negative = []
@@ -127,26 +120,14 @@ def load_eval(config, threshold=1, ratio=99):
                 if context not in positive:
                     negative.append(context)
 
-            if threshold_filter(scores, threshold, ratio) == False:
-                dev_samples.append({
-                    'query': query,
-                    'positive': positive,
-                    'negative': negative,
-                })
-            else:
-                positive_ids = [rel['id'] for rel in relevants]
-                
-                relevant_predict = item['relevant']
-                
-                for idx, id_pred in enumerate(relevant_predict[:10]):
-                    if id_pred in positive_ids:
-                        no_rerank_mrr.append(1 / (1 + idx))
-                        break
+            dev_samples.append({
+                'query': query,
+                'positive': positive,
+                'negative': negative,
+            })
         except:
             continue
-    if len(cross_dev) - len(dev_samples) != 0:
-        logger.info(f"MRR score no rerank: {sum(no_rerank_mrr) / (len(cross_dev) - len(dev_samples))}")
-    return dev_samples, no_rerank_mrr, len(cross_dev)
+    return dev_samples
 
 
 def train(config):
@@ -159,9 +140,8 @@ def train(config):
                          classifier_dropout=config['classifier_dropout']
                          )
     
-    dev_samples, no_rerank_mrr, len_samples = load_eval(config=config)
+    dev_samples = load_eval(config=config)
     logger.info(f"DEV: {len(dev_samples)}")
-    logger.info(f"No rerank: {len(no_rerank_mrr)}")
     if dev_samples:
         dev_evaluator = CERerankingEvaluator(samples=dev_samples, mrr_at_k=10)
     else:
@@ -169,8 +149,7 @@ def train(config):
 
     if config['only_test'] == True:
         mrr = dev_evaluator(model = model)
-        mrr_scores = (mrr * len(dev_samples) + sum(no_rerank_mrr)) / len_samples
-        print(mrr_scores)
+        print(mrr)
         return None
     
     if config["custom_data"] == True:

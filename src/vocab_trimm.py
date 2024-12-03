@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--config_path",
         type=str,
-        default="src/configs/trimm_vocab_config.json",
+        default="configs/trimm_vocab_config.json",
         help="Path to the configuration JSON file."
     )
 

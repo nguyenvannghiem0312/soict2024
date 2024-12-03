@@ -1,9 +1,9 @@
 import gradio as gr
 from utils.io import read_json
 
-corpus = read_json('data/Legal Document Retrieval/corpus.json')
+corpus = read_json('Turbo-AI/data-corpus')
 
-predict = read_json('outputs/detailed_predict.json')
+predict = read_json('outputs/detailed_predict_gte.json')
 
 query_index = 0
 

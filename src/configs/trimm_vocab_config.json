@@ -1,6 +1,6 @@
 {
     "model": "intfloat/multilingual-e5-base",
-    "path_to_save": "multilingual-e5-base__trimm-vocab",
+    "path_to_save": "multilingual-e5-base",
     "dataset": "Turbo-AI/data-corpus",
     "dataset_column": "text",
     "dataset_split": "train"

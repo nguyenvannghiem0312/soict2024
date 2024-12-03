@@ -1,14 +1,14 @@
 {
     "corpus_path": "Turbo-AI/data-corpus",
-    "query_path": "Turbo-AI/data-train",
-    "corpus_embedding_path": "outputs/corpus_embeddings_e5.pkl",
-    "output_predict_txt": "outputs/predict.txt",
-    "output_predict_json": "outputs/predict.json",
-    "output_detailed_predict_json": "outputs/detailed_predict.json",
-    "model_name": "Turbo-AI/me5-base-v3__trim-vocab",
-    "top_k": 10,
-    "max_length": 1022,
+    "query_path": "Turbo-AI/private-test",
+    "corpus_embedding_path": "outputs/corpus_embeddings_gte.pkl",
+    "output_predict_txt": "outputs/predict_gte.txt",
+    "output_predict_json": "outputs/predict_gte.json",
+    "output_detailed_predict_json": "outputs/detailed_predict_gte.json",
+    "model_name": "Turbo-AI/gte-base-v1__trim_vocab-1024",
+    "top_k": 50,
+    "max_length": 1024,
     "is_tokenizer": false,
-    "query_prompt": "query: ",
-    "corpus_prompt": "corpus: "
+    "query_prompt": "",
+    "corpus_prompt": ""
 }
