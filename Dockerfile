@@ -12,7 +12,7 @@ WORKDIR /workspace/src
 
 ENV PYTHONPATH=/workspace/src
 
-RUN chmod +x /workspace/src/run_all.sh
+RUN chmod +x /workspace/src/run_train.sh
 
 RUN chmod +x /workspace/src/run.sh
 
