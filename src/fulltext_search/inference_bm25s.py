@@ -54,8 +54,11 @@ def eval_dev(corpus, queries, retriever, preprocessor, top_k=3):
 def eval_test(corpus, queries, retriever, preprocessor, top_k=3):
     results = []
     for query in tqdm(queries):
-        result = retrieve_query(corpus, query, retriever, preprocessor, top_k=top_k)
-        results.append(result)
+        try:
+            result = retrieve_query(corpus, query, retriever, preprocessor, top_k=top_k)
+            results.append(result)
+        except:
+            continue
     
     return results
 
