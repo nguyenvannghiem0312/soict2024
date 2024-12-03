@@ -9,7 +9,8 @@ The pytorch version is 2.4.1, update NVIDIA driver for support CUDA 12.x or down
 docker build -t turbo-legal .
 # For interactive run full pipeline from begin
 docker run --rm -it --gpus all --net host turbo-legal /bin/bash
-./run_all.sh
+./run.sh
+or ./run_train.sh to train model
 ```
 
 ## For run individual step
